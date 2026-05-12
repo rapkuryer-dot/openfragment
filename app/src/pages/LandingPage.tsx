@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode, type MouseEvent as RMouseEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type MouseEvent as RMouseEvent,
+} from 'react';
 import {
   ArrowUpRight,
   ShieldCheck,
@@ -16,19 +22,22 @@ import {
   KeyRound,
   Fingerprint,
 } from 'lucide-react';
+import { TelegramIcon } from '@/components/TelegramIcon';
+import { TELEGRAM_COMMUNITY_URL, X_URL } from '@/lib/siteLinks';
 
 interface Props {
   onLaunch: () => void;
 }
-
-const X_URL = 'https://x.com/openfragment';
 
 export function LandingPage({ onLaunch }: Props) {
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
 
   useEffect(() => {
     const onMouse = (e: globalThis.MouseEvent) =>
-      setMouse({ x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight });
+      setMouse({
+        x: e.clientX / window.innerWidth,
+        y: e.clientY / window.innerHeight,
+      });
     window.addEventListener('mousemove', onMouse);
     return () => window.removeEventListener('mousemove', onMouse);
   }, []);
@@ -201,13 +210,7 @@ function MagneticButton({
 
 /* ---------- Logo ---------- */
 
-export function OFLogo({
-  size = 32,
-  fg,
-}: {
-  size?: number;
-  fg?: string;
-}) {
+export function OFLogo({ size = 32, fg }: { size?: number; fg?: string }) {
   const c = fg ?? 'currentColor';
   return (
     <svg
@@ -248,7 +251,12 @@ export function OFLogo({
 
 function XIcon({ className = '' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="currentColor"
+      aria-hidden
+    >
       <path d="M18.244 2H21l-6.49 7.42L22 22h-6.828l-4.77-6.24L4.8 22H2.044l6.94-7.94L2 2h6.914l4.32 5.71L18.244 2Zm-1.197 18h1.51L7.05 4H5.428l11.62 16Z" />
     </svg>
   );
@@ -294,6 +302,15 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
             title="@openfragment on X"
           >
             <XIcon className="size-3.5" />
+          </a>
+          <a
+            href={TELEGRAM_COMMUNITY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex size-9 items-center justify-center rounded-full border border-black/[0.08] text-[#229ED9] hover:text-[#0088cc] hover:border-black/[0.2] transition-colors"
+            title="OPENFRAGMENT on Telegram"
+          >
+            <TelegramIcon className="size-[18px]" />
           </a>
           <button
             onClick={onLaunch}
@@ -351,8 +368,17 @@ function Hero({
                   <span className="bg-gradient-to-r from-[#0098EA] via-[#1FA9FF] to-[#005EFF] bg-clip-text text-transparent">
                     memecoin
                   </span>
-                  <svg viewBox="0 0 200 12" className="absolute -bottom-2 left-0 w-full h-2 text-[#0098EA]/35">
-                    <path d="M2 8 Q 50 2 100 6 T 198 5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  <svg
+                    viewBox="0 0 200 12"
+                    className="absolute -bottom-2 left-0 w-full h-2 text-[#0098EA]/35"
+                  >
+                    <path
+                      d="M2 8 Q 50 2 100 6 T 198 5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </span>{' '}
                 on TON.
@@ -362,10 +388,13 @@ function Hero({
 
           <Reveal delay={520} y={20}>
             <p className="of-prose mt-9 text-[18px] md:text-[20px] leading-[1.58] text-black/65 max-w-[680px] mx-auto">
-              OpenFragment is a native TON launchpad built on Tolk + Acton. Deploy, mint
-              and distribute tokens in seconds — with built-in protection that makes
-              your launch{' '}
-              <span className="text-black font-semibold">impossible to snipe</span>.
+              OpenFragment is a native TON launchpad built on Tolk + Acton.
+              Deploy, mint and distribute tokens in seconds — with built-in
+              protection that makes your launch{' '}
+              <span className="text-black font-semibold">
+                impossible to snipe
+              </span>
+              .
             </p>
           </Reveal>
 
@@ -391,13 +420,25 @@ function Hero({
 
           <Reveal delay={860} y={16}>
             <div className="mt-16 flex items-center justify-center gap-x-8 gap-y-3 flex-wrap font-display">
-              <HeroPill icon={<ShieldCheck className="size-3.5" />} label="Non-custodial" />
+              <HeroPill
+                icon={<ShieldCheck className="size-3.5" />}
+                label="Non-custodial"
+              />
               <HeroDot />
-              <HeroPill icon={<EyeOff className="size-3.5" />} label="Anti-sniper" />
+              <HeroPill
+                icon={<EyeOff className="size-3.5" />}
+                label="Anti-sniper"
+              />
               <HeroDot />
-              <HeroPill icon={<Zap className="size-3.5" />} label="Sub-second deploys" />
+              <HeroPill
+                icon={<Zap className="size-3.5" />}
+                label="Sub-second deploys"
+              />
               <HeroDot />
-              <HeroPill icon={<Lock className="size-3.5" />} label="Audited Tolk contracts" />
+              <HeroPill
+                icon={<Lock className="size-3.5" />}
+                label="Audited Tolk contracts"
+              />
             </div>
           </Reveal>
         </div>
@@ -416,7 +457,9 @@ function HeroPill({ icon, label }: { icon: ReactNode; label: string }) {
 }
 
 function HeroDot() {
-  return <span className="hidden md:inline-block size-1 rounded-full bg-black/15" />;
+  return (
+    <span className="hidden md:inline-block size-1 rounded-full bg-black/15" />
+  );
 }
 
 function GridBackdrop() {
@@ -428,8 +471,10 @@ function GridBackdrop() {
         backgroundImage:
           'linear-gradient(to right, rgba(10,10,11,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(10,10,11,0.06) 1px, transparent 1px)',
         backgroundSize: '64px 64px',
-        maskImage: 'radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%)',
-        WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%)',
+        maskImage:
+          'radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%)',
+        WebkitMaskImage:
+          'radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%)',
       }}
     />
   );
@@ -437,7 +482,10 @@ function GridBackdrop() {
 
 function FloatingOrbs({ mouse }: { mouse: { x: number; y: number } }) {
   return (
-    <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
+    <div
+      aria-hidden
+      className="absolute inset-0 pointer-events-none overflow-hidden"
+    >
       <div
         className="absolute -top-32 -left-24 size-[420px] rounded-full opacity-50 blur-[80px]"
         style={{
@@ -461,7 +509,16 @@ function FloatingOrbs({ mouse }: { mouse: { x: number; y: number } }) {
 /* ---------- Marquee strip ---------- */
 
 function Marquee() {
-  const items = ['TON Connect 2.0', 'Tolk + Acton', 'TEP-64 Jetton', 'Sub-second deploys', 'Anti-sniper shield', 'On-chain metadata', 'Non-custodial', 'STON.fi · DeDust · Geckoterminal'];
+  const items = [
+    'TON Connect 2.0',
+    'Tolk + Acton',
+    'TEP-64 Jetton',
+    'Sub-second deploys',
+    'Anti-sniper shield',
+    'On-chain metadata',
+    'Non-custodial',
+    'STON.fi · DeDust · Geckoterminal',
+  ];
   const row = [...items, ...items];
   return (
     <section className="relative py-7 border-y border-black/[0.06] bg-[#FAFAFB] overflow-hidden">
@@ -480,19 +537,37 @@ function Marquee() {
 /* ---------- Stats ---------- */
 
 function Stats() {
-  const items = [
+  const items: {
+    v: string;
+    l: string;
+    /** Keeps one line so tops align with shorter neighbor columns */
+    valueClass?: string;
+  }[] = [
     { v: '<2s', l: 'Deploy time' },
     { v: '100%', l: 'Snipe-resistance' },
-    { v: '0.15 TON', l: 'Avg. fee' },
-    { v: 'Tolk Language', l: 'Built on' },
+    { v: '1 TON', l: 'Avg. fee' },
+    {
+      v: 'Tolk Language',
+      l: 'Built on',
+      valueClass: 'text-[clamp(28px,3.4vw,46px)] md:whitespace-nowrap',
+    },
   ];
   return (
     <section className="relative px-6 py-20 border-b border-black/[0.06]">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-10 text-center items-start justify-items-center">
         {items.map((s, i) => (
-          <Reveal key={s.l} delay={i * 100} y={22}>
-            <div>
-              <div className="font-display text-[36px] md:text-[46px] font-bold tracking-[-0.025em] leading-[1.05]">
+          <Reveal
+            key={s.l}
+            delay={i * 100}
+            y={22}
+            className="w-full max-w-[280px]"
+          >
+            <div className="flex flex-col items-center">
+              <div
+                className={`font-display text-[36px] md:text-[46px] font-bold tracking-[-0.025em] leading-[1.05] ${
+                  s.valueClass ?? ''
+                }`}
+              >
                 {s.v}
               </div>
               <div className="mt-2 font-display text-[11.5px] font-semibold text-black/45 uppercase tracking-[0.22em]">
@@ -510,12 +585,36 @@ function Stats() {
 
 function Features() {
   const features = [
-    { icon: <EyeOff className="size-5" />, title: 'Untraceable deploys', desc: 'Token contracts are committed atomically — bots cannot front-run, mempool-watch, or pre-mint your supply.' },
-    { icon: <Zap className="size-5" />, title: 'Sub-second mint', desc: 'Tolk-compiled contracts deploy and mint your initial supply in a single transaction. No two-step exposure.' },
-    { icon: <ShieldCheck className="size-5" />, title: 'Liquidity shield', desc: 'Initial liquidity launches alongside the contract and cannot be sniped — even on the first block.' },
-    { icon: <Lock className="size-5" />, title: 'Non-custodial', desc: 'We never touch your seed phrase. TON Connect signs everything client-side, on your device.' },
-    { icon: <Boxes className="size-5" />, title: 'On-chain metadata', desc: 'Logo, socials, website embedded into the jetton — Tonviewer, STON.fi, Geckoterminal all pick it up.' },
-    { icon: <Layers className="size-5" />, title: 'TEP-64 compliant', desc: 'Fully standard jetton: works in every wallet, every DEX, every TON explorer from day one.' },
+    {
+      icon: <EyeOff className="size-5" />,
+      title: 'Untraceable deploys',
+      desc: 'Token contracts are committed atomically — bots cannot front-run, mempool-watch, or pre-mint your supply.',
+    },
+    {
+      icon: <Zap className="size-5" />,
+      title: 'Sub-second mint',
+      desc: 'Tolk-compiled contracts deploy and mint your initial supply in a single transaction. No two-step exposure.',
+    },
+    {
+      icon: <ShieldCheck className="size-5" />,
+      title: 'Liquidity shield',
+      desc: 'Initial liquidity launches alongside the contract and cannot be sniped — even on the first block.',
+    },
+    {
+      icon: <Lock className="size-5" />,
+      title: 'Non-custodial',
+      desc: 'We never touch your seed phrase. TON Connect signs everything client-side, on your device.',
+    },
+    {
+      icon: <Boxes className="size-5" />,
+      title: 'On-chain metadata',
+      desc: 'Logo, socials, website embedded into the jetton — Tonviewer, STON.fi, Geckoterminal all pick it up.',
+    },
+    {
+      icon: <Layers className="size-5" />,
+      title: 'TEP-64 compliant',
+      desc: 'Fully standard jetton: works in every wallet, every DEX, every TON explorer from day one.',
+    },
   ];
   return (
     <section id="features" className="relative px-6 py-28">
@@ -537,7 +636,15 @@ function Features() {
   );
 }
 
-function FeatureCard({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: ReactNode;
+  title: string;
+  desc: string;
+}) {
   const ref = useRef<HTMLDivElement | null>(null);
   const onMove = (e: RMouseEvent<HTMLDivElement>) => {
     const el = ref.current;
@@ -558,8 +665,12 @@ function FeatureCard({ icon, title, desc }: { icon: ReactNode; title: string; de
         <div className="size-12 rounded-xl bg-gradient-to-br from-[#E8F4FF] to-[#F0F4FF] text-[#0098EA] flex items-center justify-center mb-5 group-hover:scale-[1.06] transition-transform duration-300 ring-1 ring-[#0098EA]/10">
           {icon}
         </div>
-        <div className="font-display text-[19px] font-bold tracking-[-0.01em]">{title}</div>
-        <div className="mt-2 text-[14px] leading-[1.6] text-black/55">{desc}</div>
+        <div className="font-display text-[19px] font-bold tracking-[-0.01em]">
+          {title}
+        </div>
+        <div className="mt-2 text-[14px] leading-[1.6] text-black/55">
+          {desc}
+        </div>
       </div>
     </div>
   );
@@ -569,15 +680,41 @@ function FeatureCard({ icon, title, desc }: { icon: ReactNode; title: string; de
 
 function HowItWorks() {
   const steps = [
-    { icon: <Wallet className="size-5" />, n: '01', title: 'Connect your TON wallet', desc: 'Tonkeeper, MyTonWallet, Tonhub, OpenMask — any TON Connect 2 wallet works.' },
-    { icon: <CircuitBoard className="size-5" />, n: '02', title: 'Fill in token details', desc: 'Name, symbol, supply, description, logo (drag & drop), and socials. Stored on-chain.' },
-    { icon: <Rocket className="size-5" />, n: '03', title: 'Sign once, deploy instantly', desc: 'A single transaction creates the contract, mints supply, and locks the metadata.' },
-    { icon: <CheckCircle2 className="size-5" />, n: '04', title: 'You\u2019re live everywhere', desc: 'Tonviewer, Tonscan, STON.fi, DeDust, Geckoterminal — explorers index automatically.' },
+    {
+      icon: <Wallet className="size-5" />,
+      n: '01',
+      title: 'Connect your TON wallet',
+      desc: 'Tonkeeper, MyTonWallet, Tonhub, OpenMask — any TON Connect 2 wallet works.',
+    },
+    {
+      icon: <CircuitBoard className="size-5" />,
+      n: '02',
+      title: 'Fill in token details',
+      desc: 'Name, symbol, supply, description, logo (drag & drop), and socials. Stored on-chain.',
+    },
+    {
+      icon: <Rocket className="size-5" />,
+      n: '03',
+      title: 'Sign once, deploy instantly',
+      desc: 'A single transaction creates the contract, mints supply, and locks the metadata.',
+    },
+    {
+      icon: <CheckCircle2 className="size-5" />,
+      n: '04',
+      title: 'You\u2019re live everywhere',
+      desc: 'Tonviewer, Tonscan, STON.fi, DeDust, Geckoterminal — explorers index automatically.',
+    },
   ];
   return (
-    <section id="how" className="relative px-6 py-28 bg-[#FAFAFB] border-y border-black/[0.06]">
+    <section
+      id="how"
+      className="relative px-6 py-28 bg-[#FAFAFB] border-y border-black/[0.06]"
+    >
       <div className="max-w-[1200px] mx-auto">
-        <SectionHeader eyebrow="How it works" title="From idea to live token in 4 steps." />
+        <SectionHeader
+          eyebrow="How it works"
+          title="From idea to live token in 4 steps."
+        />
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {steps.map((s, i) => (
             <Reveal key={s.n} delay={i * 120} y={28}>
@@ -591,8 +728,12 @@ function HowItWorks() {
                     {s.n}
                   </div>
                 </div>
-                <div className="relative font-display text-[17px] font-bold tracking-[-0.01em]">{s.title}</div>
-                <div className="relative mt-1.5 text-[13.5px] leading-[1.55] text-black/55">{s.desc}</div>
+                <div className="relative font-display text-[17px] font-bold tracking-[-0.01em]">
+                  {s.title}
+                </div>
+                <div className="relative mt-1.5 text-[13.5px] leading-[1.55] text-black/55">
+                  {s.desc}
+                </div>
                 {i < steps.length - 1 && (
                   <ChevronRight className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 size-5 text-black/15" />
                 )}
@@ -609,10 +750,26 @@ function HowItWorks() {
 
 function Security() {
   const points = [
-    { icon: <KeyRound className="size-4" />, t: 'No seed phrase, ever', d: 'OpenFragment is a static, client-side dApp. We don\u2019t collect, request, or store keys.' },
-    { icon: <Fingerprint className="size-4" />, t: 'Signing in your wallet', d: 'Every transaction is signed inside Tonkeeper / MyTonWallet via TON Connect 2.' },
-    { icon: <ShieldCheck className="size-4" />, t: 'Audited Tolk contracts', d: 'Open-source jetton contracts compiled with Tolk on the Acton platform.' },
-    { icon: <EyeOff className="size-4" />, t: 'Anti-sniper at contract level', d: 'Protection is enforced by the contract itself, not by a paywall or off-chain service.' },
+    {
+      icon: <KeyRound className="size-4" />,
+      t: 'No seed phrase, ever',
+      d: 'OpenFragment is a static, client-side dApp. We don\u2019t collect, request, or store keys.',
+    },
+    {
+      icon: <Fingerprint className="size-4" />,
+      t: 'Signing in your wallet',
+      d: 'Every transaction is signed inside Tonkeeper / MyTonWallet via TON Connect 2.',
+    },
+    {
+      icon: <ShieldCheck className="size-4" />,
+      t: 'Audited Tolk contracts',
+      d: 'Open-source jetton contracts compiled with Tolk on the Acton platform.',
+    },
+    {
+      icon: <EyeOff className="size-4" />,
+      t: 'Anti-sniper at contract level',
+      d: 'Protection is enforced by the contract itself, not by a paywall or off-chain service.',
+    },
   ];
 
   return (
@@ -655,7 +812,15 @@ function Security() {
   );
 }
 
-function SecurityPoint({ icon, title, desc }: { icon: ReactNode; title: string; desc: string }) {
+function SecurityPoint({
+  icon,
+  title,
+  desc,
+}: {
+  icon: ReactNode;
+  title: string;
+  desc: string;
+}) {
   return (
     <div className="of-sec group relative bg-white border border-black/[0.06] rounded-2xl p-5 h-full overflow-hidden transition-all duration-300">
       <span className="of-sec-sweep" aria-hidden />
@@ -679,7 +844,10 @@ function SecurityVisual() {
     <div className="relative aspect-square max-w-[480px] mx-auto w-full">
       <div
         className="absolute inset-0 rounded-full blur-3xl opacity-50"
-        style={{ background: 'radial-gradient(circle at 50% 45%, rgba(0,152,234,0.28), transparent 60%)' }}
+        style={{
+          background:
+            'radial-gradient(circle at 50% 45%, rgba(0,152,234,0.28), transparent 60%)',
+        }}
       />
       {[0, 1, 2, 3].map((i) => (
         <div
@@ -749,8 +917,10 @@ function CTA({ onLaunch }: { onLaunch: () => void }) {
           backgroundImage:
             'linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)',
           backgroundSize: '46px 46px',
-          maskImage: 'radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent)',
-          WebkitMaskImage: 'radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent)',
+          maskImage:
+            'radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent)',
+          WebkitMaskImage:
+            'radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent)',
         }}
       />
       <div className="relative px-6 py-32 md:py-40 text-center max-w-[1100px] mx-auto">
@@ -787,7 +957,15 @@ function CTA({ onLaunch }: { onLaunch: () => void }) {
 
 /* ---------- Section header / Footer ---------- */
 
-function SectionHeader({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle?: string }) {
+function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+}) {
   return (
     <div className="mb-16 max-w-[820px]">
       <Reveal>
@@ -830,9 +1008,15 @@ function Footer() {
           <span className="ml-2">© {new Date().getFullYear()}</span>
         </div>
         <div className="flex items-center gap-5">
-          <a href="#features" className="hover:text-black transition-colors">Features</a>
-          <a href="#how" className="hover:text-black transition-colors">How it works</a>
-          <a href="#security" className="hover:text-black transition-colors">Security</a>
+          <a href="#features" className="hover:text-black transition-colors">
+            Features
+          </a>
+          <a href="#how" className="hover:text-black transition-colors">
+            How it works
+          </a>
+          <a href="#security" className="hover:text-black transition-colors">
+            Security
+          </a>
           <a
             href={X_URL}
             target="_blank"
@@ -840,10 +1024,24 @@ function Footer() {
             className="inline-flex items-center gap-1.5 hover:text-black transition-colors"
             title="@openfragment on X"
           >
-            <XIcon className="size-3" />
-            X / Twitter
+            <XIcon className="size-3" />X / Twitter
           </a>
-          <a href="https://ton.org" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors">
+          <a
+            href={TELEGRAM_COMMUNITY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 hover:text-[#0088cc] transition-colors"
+            title="OPENFRAGMENT on Telegram"
+          >
+            <TelegramIcon className="size-3.5 shrink-0 text-[#229ED9]" />
+            Telegram
+          </a>
+          <a
+            href="https://ton.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-black transition-colors"
+          >
             TON
           </a>
         </div>

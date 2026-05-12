@@ -13,6 +13,8 @@ import { DeployPage } from './pages/DeployPage';
 import { ManagePage } from './pages/ManagePage';
 import { LandingPage } from './pages/LandingPage';
 import { OFLogo } from './pages/LandingPage';
+import { TelegramIcon } from '@/components/TelegramIcon';
+import { TELEGRAM_COMMUNITY_URL } from '@/lib/siteLinks';
 import { useRouter } from './lib/router';
 
 export const useTheme = () => ({ theme: 'light' as const, toggle: () => {} });
@@ -32,9 +34,7 @@ export default function App() {
   if (page === 'landing') {
     return (
       <LandingPage
-        onLaunch={() =>
-          window.open('/create', '_blank', 'noopener,noreferrer')
-        }
+        onLaunch={() => window.open('/create', '_blank', 'noopener,noreferrer')}
       />
     );
   }
@@ -55,7 +55,9 @@ export default function App() {
             title="Back to home"
           >
             <OFLogo size={32} />
-            <span className="font-display tracking-tight">OPEN<span className="text-[#0098EA]">FRAGMENT</span></span>
+            <span className="font-display tracking-tight">
+              OPEN<span className="text-[#0098EA]">FRAGMENT</span>
+            </span>
           </button>
           <nav
             className="flex gap-0.5 p-[3px] h-10 rounded-full items-center max-sm:h-9"
@@ -104,6 +106,16 @@ export default function App() {
               Mainnet
             </Button>
           )}
+          <a
+            href={TELEGRAM_COMMUNITY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex size-10 items-center justify-center rounded-full border border-black/[0.08] text-[#229ED9] hover:bg-[#F0F1F3] hover:border-black/[0.12] transition-colors max-sm:size-9"
+            title="OPENFRAGMENT on Telegram"
+            aria-label="Telegram community"
+          >
+            <TelegramIcon className="size-[18px]" />
+          </a>
           <TonConnectButton />
         </div>
       </header>
