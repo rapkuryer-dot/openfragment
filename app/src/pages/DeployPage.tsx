@@ -155,11 +155,11 @@ export function DeployPage({ network }: Props) {
           type: 'info',
           message: 'Uploading token logo...',
         });
-        const bin = Uint8Array.from(atob(imageFile.base64), (c) =>
-          c.charCodeAt(0),
-        );
-        const blob = new Blob([bin], { type: imageFile.type });
-        const hostedImage = await uploadImageToCatbox(blob, imageFile.name);
+        const hostedImage = await uploadImageToCatbox({
+          base64: imageFile.base64,
+          mimeType: imageFile.type,
+          filename: imageFile.name,
+        });
         if (hostedImage) publicImageUrl = hostedImage;
       }
 

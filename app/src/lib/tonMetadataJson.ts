@@ -90,34 +90,87 @@ export function buildTonApiJettonMetadataJson(
   return `${JSON.stringify(obj, null, 2)}\n`;
 }
 
-/**
- * Anonymously uploads the jetton metadata JSON to jsonblob.com and returns
- * a public https URL. TonAPI / Tonviewer / Stonks Lab / X1000 / Geckoterminal
- * fetch this URL via the TEP-64 on-chain `uri` key and merge socials/website
- * from it into the displayed token info.
- *
- * Returns `null` if upload fails — caller should fall back to on-chain-only.
- */
-/**
- * Uploads a binary image (PNG/JPEG/WebP/GIF) anonymously to catbox.moe and
- * returns the public https URL. Used for jetton logo so TonAPI / Tonviewer
- * don't have to render giant base64 data: URLs (which they ignore or truncate).
- */
+const FETCH_TIMEOUT_MS = 22_000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const tid = globalThis.setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } finally {
+    globalThis.clearTimeout(tid);
+  }
+}
+
+/** Upload logo to catbox: Vercel `api/upload-logo`, then `/_img` proxy, then direct. */
+export type LogoUploadInput = {
+  base64: string;
+  mimeType: string;
+  filename: string;
+};
+
 export async function uploadImageToCatbox(
-  blob: Blob,
-  filename: string,
+  input: LogoUploadInput,
 ): Promise<string | null> {
-  const targets = [
-    typeof window !== 'undefined' ? `${window.location.origin}/_img` : '/_img',
-    'https://catbox.moe/user/api.php',
-  ];
-  for (const url of targets) {
-    try {
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : '';
+
+  const toBlob = () =>
+    new Blob(
+      [Uint8Array.from(atob(input.base64), (c) => c.charCodeAt(0))],
+      { type: input.mimeType },
+    );
+
+  const attempts: Array<{ name: string; run: () => Promise<Response> }> = [];
+
+  if (origin) {
+    attempts.push({
+      name: 'api/upload-logo',
+      run: () =>
+        fetchWithTimeout(`${origin}/api/upload-logo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileBase64: input.base64,
+            filename: input.filename,
+            mimeType: input.mimeType,
+          }),
+        }),
+    });
+    attempts.push({
+      name: 'catbox (/_img proxy)',
+      run: () => {
+        const fd = new FormData();
+        fd.append('reqtype', 'fileupload');
+        fd.append('fileToUpload', toBlob(), input.filename);
+        return fetchWithTimeout(`${origin}/_img`, {
+          method: 'POST',
+          body: fd,
+        });
+      },
+    });
+  }
+
+  attempts.push({
+    name: 'catbox (direct)',
+    run: () => {
       const fd = new FormData();
       fd.append('reqtype', 'fileupload');
-      fd.append('fileToUpload', blob, filename);
-      const res = await fetch(url, { method: 'POST', body: fd });
-      console.log(`[OPENFRAGMENT] catbox(${url}) → HTTP ${res.status}`);
+      fd.append('fileToUpload', toBlob(), input.filename);
+      return fetchWithTimeout('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: fd,
+      });
+    },
+  });
+
+  for (const a of attempts) {
+    try {
+      const res = await a.run();
+      console.log(`[OPENFRAGMENT] ${a.name} → HTTP ${res.status}`);
       if (!res.ok) continue;
       const text = (await res.text()).trim();
       if (text.startsWith('https://')) {
@@ -125,20 +178,14 @@ export async function uploadImageToCatbox(
         return text;
       }
     } catch (err) {
-      console.warn(`[OPENFRAGMENT] catbox upload failed:`, err);
+      console.warn(`[OPENFRAGMENT] ${a.name} failed:`, err);
     }
   }
   return null;
 }
 
-/**
- * Tries multiple anonymous JSON hosts. Returns the first public https URL that
- * succeeded, or `null` if all failed. Order matters: same-origin proxy
- * (`/_meta` — Vite dev or Vercel rewrite → jsonblob) avoids browser CORS and
- * many ad-blockers that target third-party analytics-style hosts.
- */
 async function postJson(url: string, body: string): Promise<Response> {
-  return fetch(url, {
+  return fetchWithTimeout(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body,
