@@ -43,16 +43,19 @@ export function LandingPage({ onLaunch }: Props) {
   }, []);
 
   return (
-    <div className="of-landing relative min-h-screen text-[#0A0A0B] font-sans antialiased overflow-x-hidden bg-white">
+    <div className="of-landing relative min-h-screen text-[#0A0A0B] font-sans antialiased bg-white">
       <Nav onLaunch={onLaunch} />
-      <Hero onLaunch={onLaunch} mouse={mouse} />
-      <Marquee />
-      <Stats />
-      <Features />
-      <HowItWorks />
-      <Security />
-      <CTA onLaunch={onLaunch} />
-      <Footer />
+      <div className="h-16 shrink-0" aria-hidden />
+      <div className="overflow-x-hidden">
+        <Hero onLaunch={onLaunch} mouse={mouse} />
+        <Marquee />
+        <Stats />
+        <Features />
+        <HowItWorks />
+        <Security />
+        <CTA onLaunch={onLaunch} />
+        <Footer />
+      </div>
     </div>
   );
 }
@@ -275,10 +278,10 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'backdrop-blur-xl bg-white/80 border-b border-black/[0.06]'
-          : 'bg-transparent border-b border-transparent'
+          ? 'backdrop-blur-xl bg-white/90 border-b border-black/[0.06] shadow-sm'
+          : 'bg-white/80 border-b border-black/[0.04]'
       }`}
     >
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
