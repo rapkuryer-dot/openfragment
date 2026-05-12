@@ -184,7 +184,7 @@ export function DeployPage({ network }: Props) {
         setStatus({
           type: 'error',
           message:
-            'Could not upload token metadata. Check your internet connection and try again.',
+            'Could not upload token metadata. Try again in a moment. If it keeps failing, temporarily disable strict ad-blockers or VPN filters for this site.',
         });
         setLoading(false);
         return;

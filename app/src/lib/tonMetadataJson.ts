@@ -133,9 +133,9 @@ export async function uploadImageToCatbox(
 
 /**
  * Tries multiple anonymous JSON hosts. Returns the first public https URL that
- * succeeded, or `null` if all failed. Order matters: same-origin Vite proxy
- * comes first to dodge browser-level blocking (ad-blockers, privacy extensions,
- * VPN DNS rewriting, corporate proxies).
+ * succeeded, or `null` if all failed. Order matters: same-origin proxy
+ * (`/_meta` — Vite dev or Vercel rewrite → jsonblob) avoids browser CORS and
+ * many ad-blockers that target third-party analytics-style hosts.
  */
 async function postJson(url: string, body: string): Promise<Response> {
   return fetch(url, {
@@ -143,6 +143,34 @@ async function postJson(url: string, body: string): Promise<Response> {
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body,
   });
+}
+
+/** jsonblob returns `Location` as full https URL or `/api/jsonBlob/{id}`; `x-jsonblob-id` may be bare id. */
+function resolveJsonBlobPublicUrl(locationOrId: string | null): string | null {
+  if (!locationOrId) return null;
+  const loc = locationOrId.trim();
+  if (!loc) return null;
+  if (loc.startsWith('https://')) return loc;
+  if (loc.startsWith('http://')) return `https://${loc.slice('http://'.length)}`;
+  if (loc.startsWith('/')) return `https://jsonblob.com${loc}`;
+  return `https://jsonblob.com/api/jsonBlob/${loc.replace(/^\/+/, '')}`;
+}
+
+/** Prefer Location / x-jsonblob-id; if fetch followed redirects, use final URL. */
+function pickJsonBlobUrlFromResponse(r: Response): string | null {
+  const fromHeader = resolveJsonBlobPublicUrl(
+    r.headers.get('Location') || r.headers.get('x-jsonblob-id'),
+  );
+  if (fromHeader) return fromHeader;
+  try {
+    const u = new URL(r.url);
+    if (u.hostname === 'jsonblob.com' && u.pathname.startsWith('/api/jsonBlob/')) {
+      return `${u.origin}${u.pathname}`;
+    }
+  } catch {
+    /* noop */
+  }
+  return null;
 }
 
 export async function uploadMetadataJson(
@@ -161,7 +189,7 @@ export async function uploadMetadataJson(
     extract: (r: Response) => Promise<string | null>;
   }> = [
     {
-      name: 'jsonblob (via Vite proxy)',
+      name: 'jsonblob (same-origin proxy)',
       post: () =>
         postJson(
           typeof window !== 'undefined'
@@ -169,23 +197,12 @@ export async function uploadMetadataJson(
             : '/_meta',
           body,
         ),
-      extract: async (r) => {
-        const loc = r.headers.get('Location') || r.headers.get('x-jsonblob-id');
-        if (!loc) return null;
-        const id = loc.startsWith('/')
-          ? loc.slice('/api/jsonBlob/'.length)
-          : loc;
-        return `https://jsonblob.com/api/jsonBlob/${id}`;
-      },
+      extract: async (r) => pickJsonBlobUrlFromResponse(r),
     },
     {
       name: 'jsonblob (direct)',
       post: () => postJson('https://jsonblob.com/api/jsonBlob', body),
-      extract: async (r) => {
-        const loc = r.headers.get('Location');
-        if (!loc) return null;
-        return loc.startsWith('http') ? loc : `https://jsonblob.com${loc}`;
-      },
+      extract: async (r) => pickJsonBlobUrlFromResponse(r),
     },
     {
       name: 'npoint.io',
