@@ -2,7 +2,50 @@ import { beginCell, Cell, Dictionary } from '@ton/core';
 import { isAsciiOnlyUri } from './tonMetadataJson';
 
 const ONCHAIN_CONTENT_PREFIX = 0x00;
+const OFFCHAIN_CONTENT_PREFIX = 0x01;
 const SNAKE_DATA_PREFIX = 0x00;
+
+/**
+ * TEP-64 off-chain (semi/pure) content: a single ASCII URI to a JSON file
+ * that TonAPI / Tonviewer / STON.fi / Geckoterminal fetch to render token info.
+ * This keeps the on-chain state init tiny → wallets emulate the deploy fast,
+ * no oversized-message hangs, and full social/website metadata is supported.
+ */
+export function buildOffchainContent(uri: string): Cell {
+  const trimmed = uri.trim();
+  if (!isAsciiOnlyUri(trimmed)) {
+    throw new Error('Metadata URI must be ASCII only (TEP-64 spec).');
+  }
+  const data = Buffer.from(trimmed, 'utf-8');
+  const firstChunkSize = 126;
+  const chunkSize = 127;
+
+  if (data.length <= firstChunkSize) {
+    return beginCell()
+      .storeUint(OFFCHAIN_CONTENT_PREFIX, 8)
+      .storeBuffer(data)
+      .endCell();
+  }
+
+  const chunks: Buffer[] = [];
+  chunks.push(data.subarray(0, firstChunkSize));
+  let offset = firstChunkSize;
+  while (offset < data.length) {
+    const end = Math.min(offset + chunkSize, data.length);
+    chunks.push(data.subarray(offset, end));
+    offset = end;
+  }
+
+  let cell: Cell | null = null;
+  for (let i = chunks.length - 1; i >= 0; i--) {
+    const builder = beginCell();
+    if (i === 0) builder.storeUint(OFFCHAIN_CONTENT_PREFIX, 8);
+    builder.storeBuffer(chunks[i]!);
+    if (cell) builder.storeRef(cell);
+    cell = builder.endCell();
+  }
+  return cell!;
+}
 
 const sha256Keys: Record<string, Buffer> = {};
 
@@ -86,26 +129,29 @@ export async function buildOnchainMetadata(
   ];
   if (metadata.description) entries.push(['description', metadata.description]);
   if (metadata.image) entries.push(['image', metadata.image]);
-  if (metadata.twitter) entries.push(['twitter', metadata.twitter]);
-  if (metadata.telegram) entries.push(['telegram', metadata.telegram]);
 
-  // JSON array of URLs — dTON / TonAPI-style `social` list; also `social_links`
-  // (TEP-64 NFT examples). Many explorers ignore plain `twitter` / `telegram` keys.
-  const socialLinks: string[] = [];
-  if (metadata.twitter?.trim()) socialLinks.push(metadata.twitter.trim());
-  if (metadata.telegram?.trim()) socialLinks.push(metadata.telegram.trim());
-  if (socialLinks.length > 0) {
-    const socialJson = JSON.stringify(socialLinks);
-    entries.push(['social', socialJson]);
-    entries.push(['social_links', socialJson]);
+  // When an off-chain TEP-64 `uri` JSON is present, ALL socials live there.
+  // Skip duplicating them on-chain — it bloats state init and breaks wallet
+  // emulation (Tonkeeper hangs on the confirm screen for oversized payloads).
+  const hasUri = Boolean(metadata.metadataUri?.trim());
+  if (!hasUri) {
+    if (metadata.twitter) entries.push(['twitter', metadata.twitter]);
+    if (metadata.telegram) entries.push(['telegram', metadata.telegram]);
+    const socialLinks: string[] = [];
+    if (metadata.twitter?.trim()) socialLinks.push(metadata.twitter.trim());
+    if (metadata.telegram?.trim()) socialLinks.push(metadata.telegram.trim());
+    if (socialLinks.length > 0) {
+      const socialJson = JSON.stringify(socialLinks);
+      entries.push(['social', socialJson]);
+      entries.push(['social_links', socialJson]);
+    }
+    if (metadata.website?.trim()) {
+      entries.push(['websites', JSON.stringify([metadata.website.trim()])]);
+    }
   }
 
-  if (metadata.website?.trim()) {
-    entries.push(['websites', JSON.stringify([metadata.website.trim()])]);
-  }
-
-  if (metadata.metadataUri?.trim()) {
-    const uri = metadata.metadataUri.trim();
+  if (hasUri) {
+    const uri = metadata.metadataUri!.trim();
     if (!isAsciiOnlyUri(uri)) {
       throw new Error(
         'Metadata JSON URL must contain only ASCII characters (TEP-64 `uri`). Use an https URL without non-Latin characters.',

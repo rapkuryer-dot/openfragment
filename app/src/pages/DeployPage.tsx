@@ -14,7 +14,11 @@ import {
 } from 'lucide-react';
 import { buildDeployMessage, parseUnits } from '../lib/deploy';
 import { getErrorMessage, isCancelledTransactionError } from '../lib/errors';
-import { validateOptionalHttpsUrl } from '../lib/tonMetadataJson';
+import {
+  uploadImageToCatbox,
+  uploadMetadataJson,
+  validateOptionalHttpsUrl,
+} from '../lib/tonMetadataJson';
 import {
   dyorTokenUrl,
   dedustPortfolioUrl,
@@ -145,18 +149,57 @@ export function DeployPage({ network }: Props) {
     try {
       const mintAmountNano = parseUnits(mintAmount.trim(), dec);
 
+      let publicImageUrl: string | undefined;
+      if (imageFile) {
+        setStatus({
+          type: 'info',
+          message: 'Uploading token logo...',
+        });
+        const bin = Uint8Array.from(atob(imageFile.base64), (c) =>
+          c.charCodeAt(0),
+        );
+        const blob = new Blob([bin], { type: imageFile.type });
+        const hostedImage = await uploadImageToCatbox(blob, imageFile.name);
+        if (hostedImage) publicImageUrl = hostedImage;
+      }
+
+      setStatus({
+        type: 'info',
+        message:
+          'Uploading token metadata (used by Tonviewer, STON.fi, Geckoterminal, Stonks)...',
+      });
+
+      const metadataUri = await uploadMetadataJson({
+        name: name.trim(),
+        symbol: symbol.trim(),
+        decimals: decimals,
+        description: description.trim() || undefined,
+        image: publicImageUrl || imageFile?.dataUrl || undefined,
+        website: websiteUrl.trim() || undefined,
+        twitter: twitterUrl.trim() || undefined,
+        telegram: telegramUrl.trim() || undefined,
+      });
+
+      if (!metadataUri) {
+        setStatus({
+          type: 'error',
+          message:
+            'Could not upload token metadata. Check your internet connection and try again.',
+        });
+        setLoading(false);
+        return;
+      }
+
+      console.log('[OPENFRAGMENT] Off-chain metadata URI:', metadataUri);
+
       const { contractAddress, stateInit, mintBody } = await buildDeployMessage(
         {
           metadata: {
             name: name.trim(),
             symbol: symbol.trim(),
             decimals: decimals,
-            description: description.trim() || undefined,
-            imageData: imageFile?.base64 || undefined,
-            website: websiteUrl.trim() || undefined,
-            twitter: twitterUrl.trim() || undefined,
-            telegram: telegramUrl.trim() || undefined,
           },
+          offchainUri: metadataUri,
           ownerAddress,
           mintAmount: mintAmountNano,
         },
@@ -183,7 +226,7 @@ export function DeployPage({ network }: Props) {
         messages: [
           {
             address: contractAddress.toString(),
-            amount: toNano('0.15').toString(),
+            amount: toNano('1').toString(),
             stateInit: beginCell()
               .store(storeStateInit(stateInit))
               .endCell()

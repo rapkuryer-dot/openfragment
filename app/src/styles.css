@@ -96,7 +96,8 @@
   --sidebar-ring: #0098ea;
 }
 
-[data-theme='dark'] {
+/* Dark theme block kept inert — dApp is light-only now */
+[data-theme='dark-disabled'] {
   --background: oklch(0.141 0.005 285.82);
   --foreground: oklch(0.925 0.006 264.53);
   --card: oklch(0.121 0.005 285.82);
@@ -140,10 +141,15 @@
     border-color: var(--color-border, currentColor);
   }
 
+  html {
+    color-scheme: light only;
+  }
+
   html,
   body,
   #root {
     height: 100%;
+    background: #ffffff;
   }
 
   html {

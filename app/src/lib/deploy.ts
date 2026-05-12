@@ -10,7 +10,11 @@ import {
   PayloadInRef,
 } from '@wrappers/JettonMinter.gen';
 import { AskToBurn, AskToTransfer } from '@wrappers/JettonWallet.gen';
-import { buildOnchainMetadata, type JettonMetadata } from './jettonContent';
+import {
+  buildOffchainContent,
+  buildOnchainMetadata,
+  type JettonMetadata,
+} from './jettonContent';
 
 export function parseUnits(amount: string, decimals: number): bigint {
   const [whole = '', fracRaw = ''] = amount.split('.');
@@ -22,8 +26,17 @@ export async function buildDeployMessage(params: {
   metadata: JettonMetadata;
   ownerAddress: Address;
   mintAmount: bigint;
+  /**
+   * If set, the jetton content is stored as TEP-64 off-chain pointer (prefix 0x01)
+   * — a single ASCII URI to a hosted JSON document. This keeps state init tiny
+   * (deploy & emulation are fast) and TonAPI / Tonviewer / STON.fi / Geckoterminal
+   * read all fields (incl. socials) from that JSON.
+   */
+  offchainUri?: string;
 }) {
-  const content = await buildOnchainMetadata(params.metadata);
+  const content = params.offchainUri
+    ? buildOffchainContent(params.offchainUri)
+    : await buildOnchainMetadata(params.metadata);
 
   const minter = JettonMinter.fromStorage({
     totalSupply: 0n,

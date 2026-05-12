@@ -89,3 +89,131 @@ export function buildTonApiJettonMetadataJson(
 
   return `${JSON.stringify(obj, null, 2)}\n`;
 }
+
+/**
+ * Anonymously uploads the jetton metadata JSON to jsonblob.com and returns
+ * a public https URL. TonAPI / Tonviewer / Stonks Lab / X1000 / Geckoterminal
+ * fetch this URL via the TEP-64 on-chain `uri` key and merge socials/website
+ * from it into the displayed token info.
+ *
+ * Returns `null` if upload fails — caller should fall back to on-chain-only.
+ */
+/**
+ * Uploads a binary image (PNG/JPEG/WebP/GIF) anonymously to catbox.moe and
+ * returns the public https URL. Used for jetton logo so TonAPI / Tonviewer
+ * don't have to render giant base64 data: URLs (which they ignore or truncate).
+ */
+export async function uploadImageToCatbox(
+  blob: Blob,
+  filename: string,
+): Promise<string | null> {
+  const targets = [
+    typeof window !== 'undefined' ? `${window.location.origin}/_img` : '/_img',
+    'https://catbox.moe/user/api.php',
+  ];
+  for (const url of targets) {
+    try {
+      const fd = new FormData();
+      fd.append('reqtype', 'fileupload');
+      fd.append('fileToUpload', blob, filename);
+      const res = await fetch(url, { method: 'POST', body: fd });
+      console.log(`[OPENFRAGMENT] catbox(${url}) → HTTP ${res.status}`);
+      if (!res.ok) continue;
+      const text = (await res.text()).trim();
+      if (text.startsWith('https://')) {
+        console.log('[OPENFRAGMENT] Image hosted at:', text);
+        return text;
+      }
+    } catch (err) {
+      console.warn(`[OPENFRAGMENT] catbox upload failed:`, err);
+    }
+  }
+  return null;
+}
+
+/**
+ * Tries multiple anonymous JSON hosts. Returns the first public https URL that
+ * succeeded, or `null` if all failed. Order matters: same-origin Vite proxy
+ * comes first to dodge browser-level blocking (ad-blockers, privacy extensions,
+ * VPN DNS rewriting, corporate proxies).
+ */
+async function postJson(url: string, body: string): Promise<Response> {
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body,
+  });
+}
+
+export async function uploadMetadataJson(
+  input: TonApiJettonJsonInput,
+): Promise<string | null> {
+  const body = buildTonApiJettonMetadataJson(input);
+  console.log(
+    '[OPENFRAGMENT] Uploading metadata JSON, size:',
+    body.length,
+    'bytes',
+  );
+
+  const attempts: Array<{
+    name: string;
+    post: () => Promise<Response>;
+    extract: (r: Response) => Promise<string | null>;
+  }> = [
+    {
+      name: 'jsonblob (via Vite proxy)',
+      post: () =>
+        postJson(
+          typeof window !== 'undefined'
+            ? `${window.location.origin}/_meta`
+            : '/_meta',
+          body,
+        ),
+      extract: async (r) => {
+        const loc = r.headers.get('Location') || r.headers.get('x-jsonblob-id');
+        if (!loc) return null;
+        const id = loc.startsWith('/')
+          ? loc.slice('/api/jsonBlob/'.length)
+          : loc;
+        return `https://jsonblob.com/api/jsonBlob/${id}`;
+      },
+    },
+    {
+      name: 'jsonblob (direct)',
+      post: () => postJson('https://jsonblob.com/api/jsonBlob', body),
+      extract: async (r) => {
+        const loc = r.headers.get('Location');
+        if (!loc) return null;
+        return loc.startsWith('http') ? loc : `https://jsonblob.com${loc}`;
+      },
+    },
+    {
+      name: 'npoint.io',
+      post: () => postJson('https://api.npoint.io/', body),
+      extract: async (r) => {
+        try {
+          const j = (await r.json()) as { id?: string };
+          return j.id ? `https://api.npoint.io/${j.id}` : null;
+        } catch {
+          return null;
+        }
+      },
+    },
+  ];
+
+  for (const a of attempts) {
+    try {
+      const res = await a.post();
+      console.log(`[OPENFRAGMENT] ${a.name} → HTTP ${res.status}`);
+      if (!res.ok) continue;
+      const url = await a.extract(res);
+      if (url && isAsciiOnlyUri(url)) {
+        console.log(`[OPENFRAGMENT] Metadata hosted at: ${url}`);
+        return url;
+      }
+    } catch (err) {
+      console.warn(`[OPENFRAGMENT] ${a.name} failed:`, err);
+    }
+  }
+  return null;
+}

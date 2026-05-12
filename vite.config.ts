@@ -39,5 +39,22 @@ export default defineConfig({
       allow: ['.', path.resolve(projectRoot, 'wrappers-ts')],
     },
     port: 5173,
+    proxy: {
+      // Browser-side metadata upload: extensions/firewalls/VPNs often block
+      // jsonblob.com. Going through Vite server-side proxy avoids any
+      // browser-level blocking and CORS preflight overhead.
+      '/_meta': {
+        target: 'https://jsonblob.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/_meta/, '/api/jsonBlob'),
+      },
+      '/_img': {
+        target: 'https://catbox.moe',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/_img/, '/user/api.php'),
+      },
+    },
   },
 });
