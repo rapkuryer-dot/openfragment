@@ -91,13 +91,16 @@ export function buildTonApiJettonMetadataJson(
 }
 
 const FETCH_TIMEOUT_MS = 22_000;
+/** Logo upload: keep short so deploy never “hangs” on dead proxies. */
+const LOGO_FETCH_MS = 14_000;
 
-async function fetchWithTimeout(
+async function fetchWithTimeoutMs(
   input: RequestInfo | URL,
-  init?: RequestInit,
+  init: RequestInit | undefined,
+  timeoutMs: number,
 ): Promise<Response> {
   const ctrl = new AbortController();
-  const tid = globalThis.setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  const tid = globalThis.setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     return await fetch(input, { ...init, signal: ctrl.signal });
   } finally {
@@ -105,7 +108,18 @@ async function fetchWithTimeout(
   }
 }
 
-/** Upload logo to catbox: Vercel `api/upload-logo`, then `/_img` proxy, then direct. */
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  return fetchWithTimeoutMs(input, init, FETCH_TIMEOUT_MS);
+}
+
+/**
+ * Hosted logo URL for metadata. Production: only `/api/upload-logo` (server
+ * talks to catbox / mirror) — never call `/_img` or catbox from the browser on
+ * Vercel (multipart via edge rewrite often hangs). Dev: Vite `/_img` proxy.
+ */
 export type LogoUploadInput = {
   base64: string;
   mimeType: string;
@@ -115,8 +129,8 @@ export type LogoUploadInput = {
 export async function uploadImageToCatbox(
   input: LogoUploadInput,
 ): Promise<string | null> {
-  const origin =
-    typeof window !== 'undefined' ? window.location.origin : '';
+  if (typeof window === 'undefined') return null;
+  const origin = window.location.origin;
 
   const toBlob = () =>
     new Blob(
@@ -124,63 +138,53 @@ export async function uploadImageToCatbox(
       { type: input.mimeType },
     );
 
-  const attempts: Array<{ name: string; run: () => Promise<Response> }> = [];
+  const tryParseUrl = async (res: Response, label: string) => {
+    const text = (await res.text()).trim();
+    console.log(`[OPENFRAGMENT] ${label} → HTTP ${res.status}`);
+    if (res.ok && text.startsWith('https://')) {
+      console.log('[OPENFRAGMENT] Image hosted at:', text);
+      return text;
+    }
+    return null;
+  };
 
-  if (origin) {
-    attempts.push({
-      name: 'api/upload-logo',
-      run: () =>
-        fetchWithTimeout(`${origin}/api/upload-logo`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileBase64: input.base64,
-            filename: input.filename,
-            mimeType: input.mimeType,
-          }),
+  try {
+    const res = await fetchWithTimeoutMs(
+      `${origin}/api/upload-logo`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileBase64: input.base64,
+          filename: input.filename,
+          mimeType: input.mimeType,
         }),
-    });
-    attempts.push({
-      name: 'catbox (/_img proxy)',
-      run: () => {
-        const fd = new FormData();
-        fd.append('reqtype', 'fileupload');
-        fd.append('fileToUpload', toBlob(), input.filename);
-        return fetchWithTimeout(`${origin}/_img`, {
-          method: 'POST',
-          body: fd,
-        });
       },
-    });
+      LOGO_FETCH_MS,
+    );
+    const url = await tryParseUrl(res, 'api/upload-logo');
+    if (url) return url;
+  } catch (err) {
+    console.warn('[OPENFRAGMENT] api/upload-logo failed:', err);
   }
 
-  attempts.push({
-    name: 'catbox (direct)',
-    run: () => {
+  if (import.meta.env.DEV) {
+    try {
       const fd = new FormData();
       fd.append('reqtype', 'fileupload');
       fd.append('fileToUpload', toBlob(), input.filename);
-      return fetchWithTimeout('https://catbox.moe/user/api.php', {
-        method: 'POST',
-        body: fd,
-      });
-    },
-  });
-
-  for (const a of attempts) {
-    try {
-      const res = await a.run();
-      console.log(`[OPENFRAGMENT] ${a.name} → HTTP ${res.status}`);
-      if (!res.ok) continue;
-      const text = (await res.text()).trim();
-      if (text.startsWith('https://')) {
-        console.log('[OPENFRAGMENT] Image hosted at:', text);
-        return text;
-      }
+      const res = await fetchWithTimeoutMs(
+        `${origin}/_img`,
+        { method: 'POST', body: fd },
+        LOGO_FETCH_MS,
+      );
+      const url = await tryParseUrl(res, 'catbox (/_img dev proxy)');
+      if (url) return url;
     } catch (err) {
-      console.warn(`[OPENFRAGMENT] ${a.name} failed:`, err);
+      console.warn('[OPENFRAGMENT] /_img failed:', err);
     }
   }
+
   return null;
 }
 
