@@ -30,6 +30,7 @@ import {
   tonscanJettonUrl,
   tryFriendlyJettonAddress,
   tonviewerJettonUrl,
+  tonviewerPathSegment,
 } from '../lib/explorerLinks';
 import { Button } from '@/components/ui/button';
 import {
@@ -632,7 +633,7 @@ function AddressLink({
       : 'https://tonviewer.com';
   return (
     <a
-      href={`${base}/${address}`}
+      href={`${base}/${tonviewerPathSegment(address)}`}
       target="_blank"
       rel="noopener noreferrer"
       title={address}

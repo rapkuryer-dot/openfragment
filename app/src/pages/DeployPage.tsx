@@ -225,7 +225,12 @@ export function DeployPage({ network }: Props) {
         network: network === 'mainnet' ? '-239' : '-3',
         messages: [
           {
-            address: contractAddress.toString(),
+            // Non-bounceable (UQ…) is required for init+StateInit deploy; bounceable
+            // (EQ…) is often shown as a plain TON transfer without deployment in wallets.
+            address: contractAddress.toString({
+              bounceable: false,
+              testOnly: network === 'testnet',
+            }),
             amount: toNano('1').toString(),
             stateInit: beginCell()
               .store(storeStateInit(stateInit))

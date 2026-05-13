@@ -17,15 +17,25 @@ export function tryFriendlyJettonAddress(
   }
 }
 
+/** Raw `wc:hex` path segment for `tonviewer.com/{segment}` (accepts EQ…/UQ… or raw). */
+export function tonviewerPathSegment(addr: string): string {
+  try {
+    return Address.parse(addr.trim()).toRawString();
+  } catch {
+    return addr.trim();
+  }
+}
+
+/** Tonviewer canonical path uses raw `wc:hex` (e.g. `0:de175b…`), not EQ… user-friendly. */
 export function tonviewerJettonUrl(
   network: ExplorerNetwork,
-  friendlyJetton: string,
+  friendlyOrRawJetton: string,
 ): string {
   const base =
     network === 'testnet'
       ? 'https://testnet.tonviewer.com'
       : 'https://tonviewer.com';
-  return `${base}/${friendlyJetton}`;
+  return `${base}/${tonviewerPathSegment(friendlyOrRawJetton)}`;
 }
 
 export function tonscanJettonUrl(friendlyJetton: string): string {
