@@ -152,6 +152,10 @@
     background: #ffffff;
   }
 
+  body {
+    overflow-x: clip;
+  }
+
   html {
     scroll-behavior: smooth;
     /* Guard against any 1px horizontal overflow leaving a white edge.
@@ -207,15 +211,13 @@
 ::selection {
   background: oklch(0.577 0.156 243.85 / 0.25);
 }
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+
+/* Use native/overlay scrollbars (no reserved white gutter on macOS), so the
+   full-bleed dark sections reach the right edge with no white sliver beside
+   them. Firefox gets a thin bar; the track is left transparent. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
 }
 
 @keyframes enter {

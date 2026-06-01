@@ -272,10 +272,18 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
           : 'bg-white/80 border-b border-black/[0.04]'
       }`}
     >
-      <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+      <div
+        className={`max-w-[1200px] mx-auto px-6 flex items-center justify-between transition-[height] duration-300 ease-out ${
+          scrolled ? 'h-20' : 'h-16'
+        }`}
+      >
         <div className="flex items-center gap-2.5 text-[#0A0A0B]">
-          <OFLogo size={30} />
-          <div className="font-display text-[16px] font-bold tracking-[0.12em]">
+          <OFLogo size={scrolled ? 34 : 30} />
+          <div
+            className={`font-display font-bold tracking-[0.12em] transition-all duration-300 ${
+              scrolled ? 'text-[17px]' : 'text-[16px]'
+            }`}
+          >
             OPEN<span className="text-[#0098EA]">FRAGMENT</span>
           </div>
         </div>
@@ -283,6 +291,13 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
           <NavLink href="#features">Features</NavLink>
           <NavLink href="#how">How it works</NavLink>
           <NavLink href="#security">Security</NavLink>
+          <a
+            href="/launchpad"
+            className="of-navlink relative inline-flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold text-[#0098EA] rounded-full transition-colors duration-200 hover:text-[#005EFF]"
+          >
+            <Rocket className="size-3.5" />
+            <span className="relative z-10">Launchpad</span>
+          </a>
         </nav>
         <div className="flex items-center gap-2">
           <a

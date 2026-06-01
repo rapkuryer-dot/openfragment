@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
+import { ExternalLink } from 'lucide-react';
 
 /** CoinGecko public endpoint; CORS OK from browsers. */
 const TON_USD_URL =
   'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd';
+
+/** Public source page the price is read from (shown on hover / click). */
+const TON_SOURCE_URL = 'https://www.coingecko.com/en/coins/toncoin';
 
 const REFRESH_MS = 30_000;
 
@@ -60,12 +64,22 @@ export function TonPriceTicker() {
       aria-live="polite"
       aria-label="TON to US dollar price"
     >
-      <div className="pointer-events-auto rounded-full border border-black/[0.08] bg-white/90 px-3.5 py-2 shadow-sm backdrop-blur-md font-display text-[13px] font-semibold text-[#0A0A0B] tabular-nums">
+      <a
+        href={TON_SOURCE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Price source: CoinGecko · open Toncoin"
+        className="group pointer-events-auto inline-flex items-center rounded-full border border-black/[0.08] bg-white/90 px-3.5 py-2 shadow-sm backdrop-blur-md font-display text-[13px] font-semibold text-[#0A0A0B] tabular-nums transition-colors hover:border-[#0098EA]/40 hover:bg-white"
+      >
         <span className="text-[#0098EA]">TON</span>
         <span className="mx-1.5 text-black/25">/</span>
         <span>USD</span>
         <span className="ml-2 text-black/80">{formatted}</span>
-      </div>
+        <ExternalLink className="ml-1.5 size-3 text-black/30 transition-colors group-hover:text-[#0098EA]" />
+        <span className="ml-1.5 hidden whitespace-nowrap text-[11px] font-medium text-black/40 group-hover:inline">
+          CoinGecko
+        </span>
+      </a>
     </div>
   );
 }

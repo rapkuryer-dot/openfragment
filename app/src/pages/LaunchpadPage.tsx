@@ -12,8 +12,14 @@ import {
   Clock,
   Copy,
   Check,
+  GraduationCap,
 } from 'lucide-react';
-import { fetchLaunchpad, type LaunchpadToken } from '../lib/launchpad';
+import {
+  fetchLaunchpad,
+  GRADUATION_TON,
+  GRADUATION_NEAR,
+  type LaunchpadToken,
+} from '../lib/launchpad';
 import {
   tonviewerJettonUrl,
   stonFiSwapTonToJettonUrl,
@@ -29,7 +35,7 @@ interface Props {
   network: 'mainnet' | 'testnet';
 }
 
-type SortKey = 'new' | 'mcap' | 'supply';
+type ViewKey = 'new' | 'mcap' | 'supply' | 'graduated';
 
 export function LaunchpadPage({ network }: Props) {
   const { data, isLoading, isFetching, isError, refetch } = useQuery({
@@ -40,12 +46,19 @@ export function LaunchpadPage({ network }: Props) {
   });
 
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<SortKey>('new');
+  const [view, setView] = useState<ViewKey>('new');
+
+  const graduatingCount = useMemo(
+    () =>
+      (data ?? []).filter((t) => (t.graduationProgress ?? 0) >= GRADUATION_NEAR)
+        .length,
+    [data],
+  );
 
   const tokens = useMemo(() => {
     const list = data ?? [];
     const q = query.trim().toLowerCase();
-    const filtered = q
+    let filtered = q
       ? list.filter(
           (t) =>
             t.name.toLowerCase().includes(q) ||
@@ -53,16 +66,28 @@ export function LaunchpadPage({ network }: Props) {
             t.address.toLowerCase().includes(q),
         )
       : list;
+
+    if (view === 'graduated') {
+      // Tokens that have migrated or are almost there (≥ 80% of the target).
+      filtered = filtered.filter(
+        (t) => (t.graduationProgress ?? 0) >= GRADUATION_NEAR,
+      );
+    }
+
     const sorted = [...filtered];
-    if (sort === 'mcap') {
+    if (view === 'mcap') {
       sorted.sort((a, b) => (b.marketCapUsd ?? -1) - (a.marketCapUsd ?? -1));
-    } else if (sort === 'supply') {
+    } else if (view === 'supply') {
       sorted.sort((a, b) => b.circulatingSupply - a.circulatingSupply);
+    } else if (view === 'graduated') {
+      sorted.sort(
+        (a, b) => (b.graduationProgress ?? 0) - (a.graduationProgress ?? 0),
+      );
     } else {
       sorted.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
     }
     return sorted;
-  }, [data, query, sort]);
+  }, [data, query, view]);
 
   const totalMcap = useMemo(
     () => (data ?? []).reduce((acc, t) => acc + (t.marketCapUsd ?? 0), 0),
@@ -87,7 +112,7 @@ export function LaunchpadPage({ network }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <StatPill label="Tokens" value={String((data ?? []).length)} />
-          <StatPill label="Combined cap" value={formatUsd(totalMcap)} />
+          <StatPill label="Total mcap" value={formatUsd(totalMcap)} />
         </div>
       </div>
 
@@ -106,15 +131,24 @@ export function LaunchpadPage({ network }: Props) {
             className="flex items-center gap-0.5 rounded-full p-[3px]"
             style={{ background: '#F0F1F3' }}
           >
-            <SortButton active={sort === 'new'} onClick={() => setSort('new')} icon={<Clock className="size-3.5" />}>
+            <ViewButton active={view === 'new'} onClick={() => setView('new')} icon={<Clock className="size-3.5" />}>
               New
-            </SortButton>
-            <SortButton active={sort === 'mcap'} onClick={() => setSort('mcap')} icon={<TrendingUp className="size-3.5" />}>
-              Cap
-            </SortButton>
-            <SortButton active={sort === 'supply'} onClick={() => setSort('supply')} icon={<Flame className="size-3.5" />}>
+            </ViewButton>
+            <ViewButton active={view === 'mcap'} onClick={() => setView('mcap')} icon={<TrendingUp className="size-3.5" />}>
+              Mcap
+            </ViewButton>
+            <ViewButton active={view === 'supply'} onClick={() => setView('supply')} icon={<Flame className="size-3.5" />}>
               Supply
-            </SortButton>
+            </ViewButton>
+            <ViewButton
+              active={view === 'graduated'}
+              onClick={() => setView('graduated')}
+              icon={<GraduationCap className="size-3.5" />}
+              badge={graduatingCount > 0 ? graduatingCount : undefined}
+              title={`Tokens that migrated or are close to the ${GRADUATION_TON.toLocaleString('en-US')} TON migration target`}
+            >
+              Graduated
+            </ViewButton>
           </div>
           <Button
             variant="ghost"
@@ -137,11 +171,19 @@ export function LaunchpadPage({ network }: Props) {
         />
       ) : tokens.length === 0 ? (
         <EmptyBox
-          title={query ? 'No tokens match your search' : 'No tokens launched yet'}
+          title={
+            query
+              ? 'No tokens match your search'
+              : view === 'graduated'
+                ? 'No tokens graduating yet'
+                : 'No tokens launched yet'
+          }
           desc={
             query
               ? 'Try a different name, symbol or address.'
-              : 'Be the first — deploy a jetton from the Create tab and it will appear here.'
+              : view === 'graduated'
+                ? `Tokens appear here once they approach the ${GRADUATION_TON.toLocaleString('en-US')} TON migration target.`
+                : 'Be the first — deploy a jetton from the Create tab and it will appear here.'
           }
         />
       ) : (
@@ -168,20 +210,25 @@ function StatPill({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SortButton({
+function ViewButton({
   active,
   onClick,
   icon,
   children,
+  badge,
+  title,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
   children: React.ReactNode;
+  badge?: number;
+  title?: string;
 }) {
   return (
     <button
       onClick={onClick}
+      title={title}
       className={`inline-flex items-center gap-1.5 rounded-full px-3 h-8 text-[13px] font-bold transition-colors ${
         active
           ? 'bg-[#0098EA] text-white'
@@ -190,6 +237,15 @@ function SortButton({
     >
       {icon}
       {children}
+      {badge != null && (
+        <span
+          className={`ml-0.5 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-4 ${
+            active ? 'bg-white/25 text-white' : 'bg-[#0098EA]/15 text-[#0098EA]'
+          }`}
+        >
+          {badge}
+        </span>
+      )}
     </button>
   );
 }
@@ -224,6 +280,15 @@ function TokenCard({
             <span className="truncate font-display text-[16px] font-bold tracking-tight">
               {token.name}
             </span>
+            {token.graduated && (
+              <span
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--success)]/12 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-[var(--success)]"
+                title="Graduated — migrated to a DEX"
+              >
+                <GraduationCap className="size-2.5" />
+                Grad
+              </span>
+            )}
           </div>
           <div className="font-mono text-[12.5px] font-semibold text-[#0098EA]">
             ${token.symbol}
@@ -252,13 +317,15 @@ function TokenCard({
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Metric
-          label="Market cap"
+          label="Mcap"
           value={token.marketCapUsd != null ? formatUsd(token.marketCapUsd) : '—'}
           hint={token.marketCapUsd == null ? 'No liquidity yet' : undefined}
           accent
         />
         <Metric label="Supply" value={formatCompact(token.circulatingSupply)} />
       </div>
+
+      <MigrationBar token={token} />
 
       <div className="mt-3.5 space-y-2 border-t border-border pt-3.5">
         <Row label="Dev wallet">
@@ -313,6 +380,36 @@ function TokenCard({
             Trade
           </a>
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function MigrationBar({ token }: { token: LaunchpadToken }) {
+  // No price / no target → nothing meaningful to show.
+  if (token.graduationProgress == null) return null;
+  const pct = Math.max(0, Math.min(100, token.graduationProgress * 100));
+  const graduated = token.graduated === true;
+  return (
+    <div className="mt-3.5">
+      <div className="mb-1 flex items-center justify-between text-[11px] font-semibold">
+        <span className="text-muted-foreground">
+          {graduated ? 'Migrated to DEX' : 'Migration progress'}
+        </span>
+        <span className={graduated ? 'text-[var(--success)]' : 'text-[#0098EA]'}>
+          {pct.toFixed(pct < 10 ? 1 : 0)}%
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full transition-[width] duration-500"
+          style={{
+            width: `${Math.max(pct, 2)}%`,
+            background: graduated
+              ? 'var(--success)'
+              : 'linear-gradient(90deg,#0098EA,#005EFF)',
+          }}
+        />
       </div>
     </div>
   );

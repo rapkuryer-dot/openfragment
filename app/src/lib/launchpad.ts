@@ -37,7 +37,23 @@ export interface LaunchpadToken {
   priceUsd?: number;
   /** USD market cap = price × circulating supply, when price is known. */
   marketCapUsd?: number;
+  /** USD market cap needed to migrate liquidity to a DEX (graduate). */
+  graduationTargetUsd?: number;
+  /** marketCapUsd / graduationTargetUsd (0..1+); undefined when price unknown. */
+  graduationProgress?: number;
+  /** True once the token has reached / passed the migration target. */
+  graduated?: boolean;
 }
+
+/**
+ * TON-ecosystem migration standard: a token graduates (its liquidity is locked
+ * and listed on STON.fi / DeDust) once it reaches 1,500 TON — the threshold used
+ * by Blum Memepad and other TON launchpads. We convert it to USD with the live
+ * TON price so market caps can be compared against it.
+ */
+export const GRADUATION_TON = 1500;
+/** A token is "graduating soon" once it reaches this share of the target. */
+export const GRADUATION_NEAR = 0.8;
 
 const LS_KEY = 'of:launchpad:deploys';
 
@@ -139,15 +155,36 @@ async function fetchPriceUsd(
   return undefined;
 }
 
+async function fetchTonUsd(): Promise<number | undefined> {
+  try {
+    const res = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd',
+      { headers: { Accept: 'application/json' } },
+    );
+    if (!res.ok) return undefined;
+    const json = (await res.json()) as {
+      'the-open-network'?: { usd?: number };
+    };
+    const v = json['the-open-network']?.usd;
+    return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /* ---------------- main fetch ---------------- */
 
 export async function fetchLaunchpad(
   network: Network,
 ): Promise<LaunchpadToken[]> {
-  const [registry, local] = await Promise.all([
+  const [registry, local, tonUsd] = await Promise.all([
     fetchRegistry(network),
     Promise.resolve(getLocalDeploys().filter((t) => t.network === network)),
+    fetchTonUsd(),
   ]);
+
+  const graduationTargetUsd =
+    tonUsd != null ? GRADUATION_TON * tonUsd : undefined;
 
   // Dedup by raw address; keep earliest createdAt + any dev wallet hint.
   const byRaw = new Map<string, RegisteredToken>();
@@ -224,6 +261,13 @@ export async function fetchLaunchpad(
       if (price != null) {
         t.priceUsd = price;
         t.marketCapUsd = price * t.circulatingSupply;
+      }
+      if (graduationTargetUsd != null) {
+        t.graduationTargetUsd = graduationTargetUsd;
+        if (t.marketCapUsd != null) {
+          t.graduationProgress = t.marketCapUsd / graduationTargetUsd;
+          t.graduated = t.graduationProgress >= 1;
+        }
       }
     }),
   );
