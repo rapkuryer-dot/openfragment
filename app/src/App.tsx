@@ -15,7 +15,6 @@ import { LaunchpadPage } from './pages/LaunchpadPage';
 import { LandingPage } from './pages/LandingPage';
 import { DocsPage } from './pages/DocsPage';
 import { OFLogo } from './pages/LandingPage';
-import { TonPriceTicker } from '@/components/TonPriceTicker';
 import { useRouter } from './lib/router';
 
 export const useTheme = () => ({ theme: 'light' as const, toggle: () => {} });
@@ -32,11 +31,8 @@ export default function App() {
     };
   }, [tonConnectUI, page]);
 
-  const showAppChrome = page !== 'landing' && page !== 'docs';
-
   return (
     <>
-      {showAppChrome ? <TonPriceTicker /> : null}
       {page === 'landing' ? (
         <LandingPage
           onLaunch={() =>

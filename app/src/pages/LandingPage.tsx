@@ -23,7 +23,6 @@ import {
   Fingerprint,
 } from 'lucide-react';
 import { TelegramIcon } from '@/components/TelegramIcon';
-import { TonPriceTicker } from '@/components/TonPriceTicker';
 import {
   GITHUB_REPO_URL,
   TELEGRAM_COMMUNITY_URL,
@@ -1047,8 +1046,7 @@ function Footer() {
     <footer className="relative px-6 py-10 border-t border-white/10 bg-transparent text-white">
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-white/50">
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-2 text-white w-full md:w-auto">
-          <TonPriceTicker variant="inline" />
-          <OFLogo size={26} />
+          <OFLogo size={34} />
           <span className="font-display font-bold tracking-[0.12em]">
             OPEN<span className="text-[#3DA8FF]">FRAGMENT</span>
           </span>
