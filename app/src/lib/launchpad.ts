@@ -57,6 +57,24 @@ export const GRADUATION_NEAR = 0.8;
 
 const LS_KEY = 'of:launchpad:deploys';
 
+/** Dev smoke-test jetton — hidden from launchpad and not re-synced. */
+const BLOCKED_LAUNCHPAD = new Set([
+  'EQBUzM_DIIpqt495xlZRPgbHVSvf6_kDbaelk2QMpbBiXmZX',
+  '0:54cccfc3208a6ab78f79c656513e06c7552bdfebf9036da7a593640ca5b0625e',
+]);
+
+function isBlockedAddress(address: string): boolean {
+  const raw = rawAddress(address);
+  if (raw && BLOCKED_LAUNCHPAD.has(raw)) return true;
+  return BLOCKED_LAUNCHPAD.has(address.trim());
+}
+
+function pruneBlockedLocalDeploys(): void {
+  const prev = getLocalDeploys();
+  const list = prev.filter((t) => !isBlockedAddress(t.address));
+  if (list.length !== prev.length) saveLocalDeploys(list);
+}
+
 function originBase(): string {
   return typeof window !== 'undefined' ? window.location.origin : '';
 }
@@ -130,6 +148,7 @@ export async function syncLocalDeploysToRegistry(
 
 /** Record a freshly deployed token: public registry + local backup. */
 export async function registerDeploy(token: RegisteredToken): Promise<void> {
+  if (isBlockedAddress(token.address)) return;
   const local = getLocalDeploys();
   if (!local.some((t) => t.address === token.address)) {
     saveLocalDeploys([...local, token]);
@@ -213,6 +232,7 @@ async function fetchTonUsd(): Promise<number | undefined> {
 export async function fetchLaunchpad(
   network: Network,
 ): Promise<LaunchpadToken[]> {
+  pruneBlockedLocalDeploys();
   await syncLocalDeploysToRegistry(network);
 
   const [registry, local, tonUsd] = await Promise.all([
@@ -227,6 +247,7 @@ export async function fetchLaunchpad(
   // Dedup by raw address; keep earliest createdAt + any dev wallet hint.
   const byRaw = new Map<string, RegisteredToken>();
   for (const t of [...registry, ...local]) {
+    if (isBlockedAddress(t.address)) continue;
     const raw = rawAddress(t.address);
     if (!raw) continue;
     const existing = byRaw.get(raw);

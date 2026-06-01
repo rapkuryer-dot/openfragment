@@ -33,6 +33,20 @@ const MAX_TOKENS = 500;
 const JSONBLOB_TIMEOUT_MS = 10_000;
 const REST_TIMEOUT_MS = 8_000;
 
+/** Dev smoke-test jetton — never show on the public launchpad. */
+const BLOCKED_LAUNCHPAD = new Set([
+  'EQBUzM_DIIpqt495xlZRPgbHVSvf6_kDbaelk2QMpbBiXmZX',
+  '0:54cccfc3208a6ab78f79c656513e06c7552bdfebf9036da7a593640ca5b0625e',
+]);
+
+function isBlockedAddress(address: string): boolean {
+  return BLOCKED_LAUNCHPAD.has(address.trim());
+}
+
+function withoutBlocked(tokens: RegisteredToken[]): RegisteredToken[] {
+  return tokens.filter((t) => !isBlockedAddress(t.address));
+}
+
 function parseRedisUrlToRest(url: string): { url: string; token: string } | null {
   try {
     const u = new URL(url);
@@ -169,7 +183,7 @@ async function listTokens(
     try {
       const raw = await redisRest(['HGETALL', kvKey(network)], store);
       return {
-        tokens: sortNewest(tokensFromHgetall(raw)).slice(0, MAX_TOKENS),
+        tokens: withoutBlocked(sortNewest(tokensFromHgetall(raw))).slice(0, MAX_TOKENS),
         persisted: true,
         backend: store.label,
       };
@@ -183,7 +197,7 @@ async function listTokens(
     const blob = await readBlob();
     const tokens = Object.values(blob[network] ?? {});
     return {
-      tokens: sortNewest(tokens).slice(0, MAX_TOKENS),
+      tokens: withoutBlocked(sortNewest(tokens)).slice(0, MAX_TOKENS),
       persisted: true,
       backend: 'jsonblob',
     };
@@ -195,6 +209,9 @@ async function listTokens(
 async function upsertToken(
   entry: RegisteredToken,
 ): Promise<{ persisted: boolean; backend: string }> {
+  if (isBlockedAddress(entry.address)) {
+    return { persisted: false, backend: 'blocked' };
+  }
   const network = entry.network;
   const key = tokenKey(entry.address);
   const hashKey = kvKey(network);
@@ -284,6 +301,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const address = sanitize(body.address, 80);
       if (!address) {
         res.status(400).json({ error: 'address required' });
+        return;
+      }
+      if (isBlockedAddress(address)) {
+        res.status(403).json({ error: 'Token blocked' });
         return;
       }
       const network = body.network === 'testnet' ? 'testnet' : 'mainnet';
