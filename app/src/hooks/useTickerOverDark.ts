@@ -16,7 +16,7 @@ export function useTickerOverDark(enabled: boolean): boolean {
     }
 
     const check = () => {
-      const x = 88;
+      const x = 56;
       const y = window.innerHeight - 28;
       const stack = document.elementsFromPoint(x, y);
 

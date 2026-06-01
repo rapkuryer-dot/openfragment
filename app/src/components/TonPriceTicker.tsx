@@ -62,12 +62,17 @@ export function TonPriceTicker() {
         ? '—'
         : '…';
 
-  const dark = onLanding && overDark;
+  /** Landing dark footer — sit above logo row, minimal pill. */
+  const onFooter = onLanding && overDark;
 
   return (
     <div
       data-ton-ticker-probe
-      className="fixed bottom-3 left-3 z-40 max-sm:bottom-2.5 max-sm:left-2.5 pointer-events-none"
+      className={`fixed z-40 pointer-events-none ${
+        onFooter
+          ? 'bottom-[5.5rem] left-4 max-sm:bottom-[5.25rem] max-sm:left-3'
+          : 'bottom-3 left-3 max-sm:bottom-2.5 max-sm:left-2.5'
+      }`}
       aria-live="polite"
       aria-label="TON to US dollar price"
     >
@@ -76,34 +81,27 @@ export function TonPriceTicker() {
         target="_blank"
         rel="noopener noreferrer"
         title="Price source: CoinGecko · open Toncoin"
-        className={`group pointer-events-auto inline-flex items-center rounded-full border px-2 py-1 shadow-sm backdrop-blur-md font-display text-[10.5px] font-semibold tabular-nums leading-none transition-all duration-300 ${
-          dark
-            ? 'border-white/20 bg-[#0A0A0B]/85 text-white hover:border-[#3DA8FF]/50 hover:bg-[#0A0A0B]/95'
-            : 'border-black/[0.08] bg-white/90 text-[#0A0A0B] hover:border-[#0098EA]/40 hover:bg-white'
+        className={`group pointer-events-auto inline-flex items-center rounded-full border shadow-sm backdrop-blur-md font-display font-semibold tabular-nums leading-none transition-all duration-300 ${
+          onFooter
+            ? 'gap-0 border-white/15 bg-[#0A0A0B]/80 px-1.5 py-0.5 text-[9px] text-white/90 hover:border-[#3DA8FF]/40'
+            : 'gap-0 border-black/[0.08] bg-white/90 px-2 py-1 text-[10px] text-[#0A0A0B] hover:border-[#0098EA]/40 hover:bg-white'
         }`}
       >
-        <span className={dark ? 'text-[#3DA8FF]' : 'text-[#0098EA]'}>TON</span>
-        <span className={dark ? 'mx-1 text-white/35' : 'mx-1 text-black/25'}>
-          /
-        </span>
-        <span>USD</span>
-        <span className={dark ? 'ml-1.5 text-white/90' : 'ml-1.5 text-black/80'}>
-          {formatted}
-        </span>
-        <ExternalLink
-          className={`ml-1 size-2.5 transition-colors ${
-            dark
-              ? 'text-white/40 group-hover:text-[#3DA8FF]'
-              : 'text-black/30 group-hover:text-[#0098EA]'
-          }`}
-        />
-        <span
-          className={`ml-1 hidden whitespace-nowrap text-[9px] font-medium group-hover:inline ${
-            dark ? 'text-white/45' : 'text-black/40'
-          }`}
-        >
-          CoinGecko
-        </span>
+        {onFooter ? (
+          <>
+            <span className="text-[#3DA8FF]">TON</span>
+            <span className="mx-0.5 text-white/30">·</span>
+            <span>{formatted}</span>
+          </>
+        ) : (
+          <>
+            <span className="text-[#0098EA]">TON</span>
+            <span className="mx-0.5 text-black/25">/</span>
+            <span className="text-black/55 text-[9px]">USD</span>
+            <span className="ml-1 text-black/80">{formatted}</span>
+            <ExternalLink className="ml-0.5 size-2 text-black/25 group-hover:text-[#0098EA]" />
+          </>
+        )}
       </a>
     </div>
   );
