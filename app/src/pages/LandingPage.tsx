@@ -21,7 +21,6 @@ import {
   CircuitBoard,
   KeyRound,
   Fingerprint,
-  BookOpen,
 } from 'lucide-react';
 import { TelegramIcon } from '@/components/TelegramIcon';
 import { TELEGRAM_COMMUNITY_URL, X_URL } from '@/lib/siteLinks';
@@ -298,17 +297,10 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
           <NavLink href="#features">Features</NavLink>
           <NavLink href="#how">How it works</NavLink>
           <NavLink href="#security">Security</NavLink>
-          <NavLink href="/docs">
-            <BookOpen className="relative z-10 size-3.5 shrink-0" />
-            Docs
+          <NavLink href="/docs">Docs</NavLink>
+          <NavLink href="/launchpad" icon={<Rocket className="size-3.5" />}>
+            Launchpad
           </NavLink>
-          <a
-            href="/launchpad"
-            className="of-navlink relative inline-flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold rounded-full transition-colors duration-200"
-          >
-            <Rocket className="relative z-10 size-3.5" />
-            <span className="relative z-10">Launchpad</span>
-          </a>
         </nav>
         <div className="flex items-center gap-2">
           <a
@@ -344,12 +336,21 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
   );
 }
 
-function NavLink({ href, children }: { href: string; children: ReactNode }) {
+function NavLink({
+  href,
+  children,
+  icon,
+}: {
+  href: string;
+  children: ReactNode;
+  icon?: ReactNode;
+}) {
   return (
     <a
       href={href}
-      className="of-navlink relative inline-flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold rounded-full transition-colors duration-200"
+      className="of-navlink relative inline-flex items-center justify-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold leading-none rounded-full transition-colors duration-200"
     >
+      {icon ? <span className="relative z-10 shrink-0">{icon}</span> : null}
       <span className="relative z-10">{children}</span>
     </a>
   );

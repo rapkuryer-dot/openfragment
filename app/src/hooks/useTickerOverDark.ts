@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 
+const TICKER_PROBE = '[data-ton-ticker-probe]';
+
 /**
- * True when the bottom-left TON ticker sits over the visible dark reveal panel
- * (not merely when the panel exists in the document).
+ * Dark pill only when the pixel under the TON ticker (ignoring the ticker itself)
+ * hits the landing reveal panel — not when a hidden panel sits under the white layer.
  */
 export function useTickerOverDark(enabled: boolean): boolean {
   const [overDark, setOverDark] = useState(false);
@@ -13,13 +15,23 @@ export function useTickerOverDark(enabled: boolean): boolean {
       return;
     }
 
-    const panel = document.querySelector('.of-reveal-panel');
-    if (!panel) return;
-
     const check = () => {
-      const rect = panel.getBoundingClientRect();
-      const tickerY = window.innerHeight - 32;
-      setOverDark(rect.top <= tickerY && rect.bottom > tickerY - 24);
+      const x = 88;
+      const y = window.innerHeight - 28;
+      const stack = document.elementsFromPoint(x, y);
+
+      for (const el of stack) {
+        if (el.closest(TICKER_PROBE)) continue;
+        if (el.closest('.of-reveal-content')) {
+          setOverDark(false);
+          return;
+        }
+        if (el.closest('.of-reveal-panel')) {
+          setOverDark(true);
+          return;
+        }
+      }
+      setOverDark(false);
     };
 
     check();

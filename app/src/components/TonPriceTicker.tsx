@@ -66,6 +66,7 @@ export function TonPriceTicker() {
 
   return (
     <div
+      data-ton-ticker-probe
       className="fixed bottom-4 left-4 z-40 max-sm:bottom-3 max-sm:left-3 max-sm:right-auto pointer-events-none"
       aria-live="polite"
       aria-label="TON to US dollar price"
