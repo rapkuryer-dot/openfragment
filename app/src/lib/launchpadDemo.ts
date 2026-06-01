@@ -51,10 +51,6 @@ function demoAddress(index: number): string {
   return `0:ded0000000000000000000000000000000000000000000000000000000000${hex}`;
 }
 
-function avatar(seed: string): string {
-  return `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(seed)}`;
-}
-
 export function buildLaunchpadDemoTokens(
   network: Network,
   graduationTargetUsd: number,
@@ -86,7 +82,7 @@ export function buildLaunchpadDemoTokens(
       description: nearGrad
         ? 'Preview — almost at migration target'
         : 'Preview token for launchpad layout',
-      image: avatar(meta.seed),
+      image: undefined,
       totalSupply: BigInt(supply) * 1_000_000_000n,
       circulatingSupply: supply,
       mintable: i % 4 !== 0,

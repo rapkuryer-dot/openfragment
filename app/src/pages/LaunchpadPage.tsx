@@ -17,6 +17,7 @@ import {
 import {
   enrichLaunchpadTokens,
   fetchLaunchpadShell,
+  getLaunchpadDemoSnapshot,
   GRADUATION_TON,
   GRADUATION_NEAR,
   type LaunchpadToken,
@@ -42,22 +43,28 @@ export function LaunchpadPage({ network }: Props) {
   const shellQuery = useQuery({
     queryKey: ['launchpad', network, 'shell'],
     queryFn: () => fetchLaunchpadShell(network),
+    initialData: () => getLaunchpadDemoSnapshot(network),
     staleTime: 60_000,
     gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const enrichQuery = useQuery({
-    queryKey: ['launchpad', network, 'enrich', shellQuery.dataUpdatedAt],
+    queryKey: ['launchpad', network, 'enrich'],
     queryFn: () => enrichLaunchpadTokens(network, shellQuery.data!),
-    enabled: (shellQuery.data?.length ?? 0) > 0,
-    staleTime: 45_000,
-    refetchInterval: 90_000,
+    enabled: shellQuery.isSuccess && (shellQuery.data?.length ?? 0) > 0,
+    staleTime: 120_000,
+    refetchInterval: 5 * 60_000,
     placeholderData: (prev) => prev ?? shellQuery.data,
   });
 
   const data = enrichQuery.data ?? shellQuery.data;
-  const isLoading = shellQuery.isLoading && !data?.length;
-  const isFetching = shellQuery.isFetching || enrichQuery.isFetching;
+  const isLoading =
+    shellQuery.isLoading &&
+    !shellQuery.data?.length &&
+    !getLaunchpadDemoSnapshot(network).length;
+  const isFetching =
+    shellQuery.isFetching || (enrichQuery.isFetching && enrichQuery.isEnabled);
   const isError = shellQuery.isError;
   const refetch = () => {
     void shellQuery.refetch();
@@ -287,6 +294,8 @@ function TokenCard({
             <AvatarImage
               src={token.image}
               alt={token.name}
+              loading="lazy"
+              decoding="async"
               onError={() => setImgError(true)}
             />
           ) : null}

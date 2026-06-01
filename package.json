@@ -12,6 +12,7 @@
     "lint": "eslint --max-warnings 0 .",
     "lint:fix": "eslint --fix .",
     "test": "echo \"no test specified\" && exit 0",
+    "bench:launchpad": "node scripts/bench-launchpad.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

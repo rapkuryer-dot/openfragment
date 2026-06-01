@@ -16,9 +16,7 @@ export interface RegisteredToken {
 }
 
 export interface LaunchpadToken {
-  /** Raw `0:hex` address (canonical key). */
   address: string;
-  /** UI-only preview row (not a real jetton). */
   isDemo?: boolean;
   network: Network;
   name: string;
@@ -31,23 +29,15 @@ export interface LaunchpadToken {
   website?: string;
   metadataUri?: string;
   totalSupply: bigint;
-  /** Human-readable circulating supply (totalSupply / 10^decimals). */
   circulatingSupply: number;
   mintable: boolean;
-  /** Dev / owner wallet (jetton admin). null = admin revoked. */
   devWallet: string | null;
   adminRevoked: boolean;
-  /** Unix ms when first registered (deploy time), if known. */
   createdAt?: number;
-  /** USD price from STON.fi, when the token has DEX liquidity. */
   priceUsd?: number;
-  /** USD market cap = price × circulating supply, when price is known. */
   marketCapUsd?: number;
-  /** USD market cap needed to migrate liquidity to a DEX (graduate). */
   graduationTargetUsd?: number;
-  /** marketCapUsd / graduationTargetUsd (0..1+); undefined when price unknown. */
   graduationProgress?: number;
-  /** True once the token has reached / passed the migration target. */
   graduated?: boolean;
 }
 
@@ -55,9 +45,13 @@ export const GRADUATION_TON = 1500;
 export const GRADUATION_NEAR = 0.8;
 
 const LS_KEY = 'of:launchpad:deploys';
-const STON_CONCURRENCY = 6;
+const STON_CONCURRENCY = 4;
+const STON_TIMEOUT_MS = 4_000;
+const REGISTRY_TIMEOUT_MS = 3_500;
+const TONCENTER_TIMEOUT_MS = 10_000;
 const TON_USD_TTL_MS = 5 * 60_000;
 const DEFAULT_GRADUATION_TARGET_USD = 68_000;
+const TONCENTER_MAX_RETRIES = 1;
 
 const BLOCKED_LAUNCHPAD = new Set([
   'EQBUzM_DIIpqt495xlZRPgbHVSvf6_kDbaelk2QMpbBiXmZX',
@@ -65,6 +59,9 @@ const BLOCKED_LAUNCHPAD = new Set([
 ]);
 
 let tonUsdCache: { v: number; at: number } | null = null;
+let tonUsdInflight: Promise<number | undefined> | null = null;
+let tonUsdFailAt: number | null = null;
+const TON_USD_FAIL_COOLDOWN_MS = 90_000;
 
 function isBlockedAddress(address: string): boolean {
   const raw = rawAddress(address);
@@ -116,6 +113,7 @@ async function postToRegistry(token: RegisteredToken): Promise<boolean> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(token),
+      signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return false;
     const json = (await res.json()) as { persisted?: boolean };
@@ -166,7 +164,10 @@ async function fetchRegistry(network: Network): Promise<RegisteredToken[]> {
   try {
     const res = await fetch(
       `${originBase()}/api/launchpad?network=${network}`,
-      { headers: { Accept: 'application/json' } },
+      {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(REGISTRY_TIMEOUT_MS),
+      },
     );
     if (!res.ok) return [];
     const json = (await res.json()) as { tokens?: RegisteredToken[] };
@@ -180,7 +181,10 @@ async function fetchTonUsd(): Promise<number | undefined> {
   try {
     const res = await fetch(
       'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd',
-      { headers: { Accept: 'application/json' } },
+      {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(5_000),
+      },
     );
     if (!res.ok) return undefined;
     const json = (await res.json()) as {
@@ -197,8 +201,21 @@ async function fetchTonUsdCached(): Promise<number | undefined> {
   if (tonUsdCache && Date.now() - tonUsdCache.at < TON_USD_TTL_MS) {
     return tonUsdCache.v;
   }
-  const v = await fetchTonUsd();
-  if (v != null) tonUsdCache = { v, at: Date.now() };
+  if (tonUsdFailAt && Date.now() - tonUsdFailAt < TON_USD_FAIL_COOLDOWN_MS) {
+    return undefined;
+  }
+  if (!tonUsdInflight) {
+    tonUsdInflight = fetchTonUsd().finally(() => {
+      tonUsdInflight = null;
+    });
+  }
+  const v = await tonUsdInflight;
+  if (v != null) {
+    tonUsdCache = { v, at: Date.now() };
+    tonUsdFailAt = null;
+  } else {
+    tonUsdFailAt = Date.now();
+  }
   return v;
 }
 
@@ -227,6 +244,44 @@ function tokenFromRegistry(
     createdAt: reg.createdAt,
     graduationTargetUsd: targetUsd,
   };
+}
+
+function mergeTokens(
+  network: Network,
+  registry: RegisteredToken[],
+  local: RegisteredToken[],
+  targetUsd: number,
+): LaunchpadToken[] {
+  const byRaw = new Map<string, RegisteredToken>();
+  for (const t of [...registry, ...local]) {
+    if (isBlockedAddress(t.address)) continue;
+    const raw = rawAddress(t.address);
+    if (!raw || isDemoLaunchpadAddress(raw)) continue;
+    const existing = byRaw.get(raw);
+    if (!existing || t.createdAt < existing.createdAt) {
+      byRaw.set(raw, { ...t, address: raw });
+    }
+  }
+
+  const real: LaunchpadToken[] = [...byRaw.values()].map((reg) =>
+    tokenFromRegistry(reg, network, targetUsd),
+  );
+  const demo = buildLaunchpadDemoTokens(network, targetUsd) as LaunchpadToken[];
+
+  const merged = new Map<string, LaunchpadToken>();
+  for (const t of [...demo, ...real]) merged.set(t.address, t);
+
+  const tokens = [...merged.values()];
+  tokens.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  return tokens;
+}
+
+/** Synchronous snapshot for instant first paint (demo cards only). */
+export function getLaunchpadDemoSnapshot(network: Network): LaunchpadToken[] {
+  return buildLaunchpadDemoTokens(
+    network,
+    DEFAULT_GRADUATION_TARGET_USD,
+  ) as LaunchpadToken[];
 }
 
 async function mapPool<T, R>(
@@ -258,7 +313,10 @@ async function fetchPriceUsd(
   try {
     const res = await fetch(
       `https://api.ston.fi/v1/assets/${encodeURIComponent(friendlyAddress)}`,
-      { headers: { Accept: 'application/json' } },
+      {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(STON_TIMEOUT_MS),
+      },
     );
     if (!res.ok) return undefined;
     const json = (await res.json()) as { asset?: Record<string, unknown> };
@@ -279,67 +337,71 @@ async function fetchPriceUsd(
   return undefined;
 }
 
-/** Fast path: registry + demo metadata only (no Toncenter / STON). */
+function applyGraduationTarget(tokens: LaunchpadToken[], targetUsd: number): LaunchpadToken[] {
+  return tokens.map((t) => {
+    const next = { ...t, graduationTargetUsd: targetUsd };
+    if (t.marketCapUsd != null) {
+      next.graduationProgress = t.marketCapUsd / targetUsd;
+      next.graduated = next.graduationProgress >= 1;
+    }
+    return next;
+  });
+}
+
+/** Fast path: demo snapshot + registry (no Toncenter / STON / CoinGecko). */
 export async function fetchLaunchpadShell(
   network: Network,
 ): Promise<LaunchpadToken[]> {
   pruneBlockedLocalDeploys();
   void syncLocalDeploysToRegistry(network);
 
-  const [registry, local, tonUsd] = await Promise.all([
+  const [registry, local] = await Promise.all([
     fetchRegistry(network),
     Promise.resolve(getLocalDeploys().filter((t) => t.network === network)),
-    fetchTonUsdCached(),
   ]);
 
-  const targetUsd = graduationTargetUsd(tonUsd);
-  const byRaw = new Map<string, RegisteredToken>();
-  for (const t of [...registry, ...local]) {
-    if (isBlockedAddress(t.address)) continue;
-    const raw = rawAddress(t.address);
-    if (!raw || isDemoLaunchpadAddress(raw)) continue;
-    const existing = byRaw.get(raw);
-    if (!existing || t.createdAt < existing.createdAt) {
-      byRaw.set(raw, { ...t, address: raw });
-    }
-  }
-
-  const real: LaunchpadToken[] = [...byRaw.values()].map((reg) =>
-    tokenFromRegistry(reg, network, targetUsd),
+  return mergeTokens(
+    network,
+    registry,
+    local,
+    DEFAULT_GRADUATION_TARGET_USD,
   );
-  const demo = buildLaunchpadDemoTokens(network, targetUsd) as LaunchpadToken[];
-
-  const merged = new Map<string, LaunchpadToken>();
-  for (const t of [...demo, ...real]) merged.set(t.address, t);
-
-  const tokens = [...merged.values()];
-  tokens.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
-  return tokens;
 }
 
-/** Enrich real tokens from chain + STON (demo rows unchanged). */
+/** Enrich real tokens from chain + STON; demo-only returns immediately. */
 export async function enrichLaunchpadTokens(
   network: Network,
   tokens: LaunchpadToken[],
 ): Promise<LaunchpadToken[]> {
+  const real = tokens.filter(
+    (t) => !t.isDemo && !isDemoLaunchpadAddress(t.address),
+  );
+
+  if (real.length === 0) {
+    void fetchTonUsdCached();
+    return applyGraduationTarget(tokens, DEFAULT_GRADUATION_TARGET_USD);
+  }
+
   const tonUsd = await fetchTonUsdCached();
   const targetUsd = graduationTargetUsd(tonUsd);
 
-  const realRaws = tokens
-    .filter((t) => !t.isDemo && !isDemoLaunchpadAddress(t.address))
-    .map((t) => t.address);
+  const realRaws = real.map((t) => t.address);
+  const masterByRaw = new Map<
+    string,
+    Awaited<ReturnType<typeof fetchJettonMasters>>[number]
+  >();
 
-  const masterByRaw = new Map<string, Awaited<ReturnType<typeof fetchJettonMasters>>[number]>();
-  if (realRaws.length > 0) {
-    try {
-      const masters = await fetchJettonMasters(network, realRaws);
-      for (const m of masters) {
-        const raw = rawAddress(m.address) ?? m.address;
-        masterByRaw.set(raw, m);
-      }
-    } catch {
-      /* show registry metadata */
+  try {
+    const masters = await fetchJettonMasters(network, realRaws, {
+      maxRetries: TONCENTER_MAX_RETRIES,
+      timeoutMs: TONCENTER_TIMEOUT_MS,
+    });
+    for (const m of masters) {
+      const raw = rawAddress(m.address) ?? m.address;
+      masterByRaw.set(raw, m);
     }
+  } catch {
+    /* registry metadata is enough */
   }
 
   const friendlyByRaw = new Map<string, string>();
@@ -355,7 +417,9 @@ export async function enrichLaunchpadTokens(
   };
 
   const out: LaunchpadToken[] = tokens.map((t) => {
-    if (t.isDemo || isDemoLaunchpadAddress(t.address)) return { ...t, graduationTargetUsd: targetUsd };
+    if (t.isDemo || isDemoLaunchpadAddress(t.address)) {
+      return { ...t, graduationTargetUsd: targetUsd };
+    }
 
     const m = masterByRaw.get(t.address);
     const decimals = parseInt(m?.metadata.decimals ?? '9') || 9;
@@ -388,11 +452,7 @@ export async function enrichLaunchpadTokens(
     };
   });
 
-  const realForPrice = out.filter(
-    (t) => !t.isDemo && !isDemoLaunchpadAddress(t.address),
-  );
-
-  await mapPool(realForPrice, STON_CONCURRENCY, async (t) => {
+  await mapPool(real, STON_CONCURRENCY, async (t) => {
     const price = await fetchPriceUsd(
       network,
       friendlyByRaw.get(t.address) ?? t.address,
@@ -409,9 +469,29 @@ export async function enrichLaunchpadTokens(
   return out;
 }
 
-/** Full fetch (shell + enrich). Prefer staged queries on the page for speed. */
 export async function fetchLaunchpad(network: Network): Promise<LaunchpadToken[]> {
   const shell = await fetchLaunchpadShell(network);
   if (shell.length === 0) return shell;
   return enrichLaunchpadTokens(network, shell);
+}
+
+/** Dev-only timing breakdown (call from console or tests). */
+export async function benchmarkLaunchpadLoad(
+  network: Network = 'mainnet',
+): Promise<Record<string, number>> {
+  const t0 = performance.now();
+  const registry = await fetchRegistry(network);
+  const tRegistry = performance.now();
+  const shell = await fetchLaunchpadShell(network);
+  const tShell = performance.now();
+  const enriched = await enrichLaunchpadTokens(network, shell);
+  const tEnrich = performance.now();
+  return {
+    registryMs: Math.round(tRegistry - t0),
+    shellMs: Math.round(tShell - tRegistry),
+    enrichMs: Math.round(tEnrich - tShell),
+    totalMs: Math.round(tEnrich - t0),
+    tokenCount: enriched.length,
+    realCount: enriched.filter((t) => !t.isDemo).length,
+  };
 }

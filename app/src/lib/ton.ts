@@ -246,6 +246,7 @@ export async function fetchJettonMaster(
 export async function fetchJettonMasters(
   network: Network,
   addresses: string[],
+  options?: { maxRetries?: number; timeoutMs?: number },
 ): Promise<JettonMasterInfo[]> {
   if (addresses.length === 0) return [];
   const url = buildV3Url(network, '/jetton/masters', {
@@ -253,7 +254,13 @@ export async function fetchJettonMasters(
     limit: String(Math.min(addresses.length, 1000)),
     offset: '0',
   });
-  const res = await fetchWithRetry(url);
+  const res = await fetchWithRetry(
+    url,
+    options?.timeoutMs
+      ? { signal: AbortSignal.timeout(options.timeoutMs) }
+      : undefined,
+    options?.maxRetries ?? 4,
+  );
   if (!res.ok) throw new Error(`Toncenter API error: ${res.status}`);
   const json = await res.json();
   const masters = (json.jetton_masters ?? []) as Record<string, unknown>[];
