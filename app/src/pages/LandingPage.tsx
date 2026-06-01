@@ -1052,7 +1052,9 @@ function Footer() {
           <span className="font-display font-bold tracking-[0.12em]">
             OPEN<span className="text-[#3DA8FF]">FRAGMENT</span>
           </span>
-          <span className="ml-2 text-white/40">© {new Date().getFullYear()}</span>
+          <span className="ml-2 text-white/40">
+            © {new Date().getFullYear()}
+          </span>
         </div>
         <div className="flex items-center gap-5">
           <a href="/launchpad" className="hover:text-white transition-colors">
@@ -1083,20 +1085,18 @@ function Footer() {
             href={X_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
-            title="@openfragment on X"
+            className="hover:text-white transition-colors"
+            title="@openfragment on Twitter"
           >
-            <XIcon className="size-3" />
-            X
+            Twitter
           </a>
           <a
             href={TELEGRAM_COMMUNITY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 hover:text-[#3DA8FF] transition-colors"
+            className="hover:text-[#3DA8FF] transition-colors"
             title="OPENFRAGMENT on Telegram"
           >
-            <TelegramIcon className="size-3.5 shrink-0 text-[#3DA8FF]" />
             Telegram
           </a>
           <a

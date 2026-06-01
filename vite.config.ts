@@ -10,9 +10,9 @@ export default defineConfig({
   root: 'app',
   envDir: projectRoot,
   define: {
-    // Preview tokens on /launchpad unless explicitly disabled at build time.
+    // Preview tokens only when VITE_LAUNCHPAD_DEMO=true at build time (off in production).
     'import.meta.env.VITE_LAUNCHPAD_DEMO': JSON.stringify(
-      process.env.VITE_LAUNCHPAD_DEMO ?? 'true',
+      process.env.VITE_LAUNCHPAD_DEMO ?? 'false',
     ),
   },
   // NOTE: TONCENTER_* keys are intentionally NOT exposed to the client bundle.

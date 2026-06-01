@@ -38,7 +38,10 @@
           "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
         },
         { "key": "X-DNS-Prefetch-Control", "value": "on" },
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
       ]
     }
   ],

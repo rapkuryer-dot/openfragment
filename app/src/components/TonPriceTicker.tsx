@@ -19,8 +19,10 @@ type Variant = 'fixed' | 'inline';
 export function TonPriceTicker({ variant = 'fixed' }: { variant?: Variant }) {
   const [usd, setUsd] = useState<number | null>(null);
   const [stale, setStale] = useState(false);
-  const onLanding =
-    typeof window !== 'undefined' && window.location.pathname === '/';
+  const path =
+    typeof window !== 'undefined' ? window.location.pathname : '';
+  const onLanding = path === '/';
+  const onDocs = path === '/docs';
   const overDark = useTickerOverDark(onLanding);
 
   useEffect(() => {
@@ -84,7 +86,9 @@ export function TonPriceTicker({ variant = 'fixed' }: { variant?: Variant }) {
       <span className={dark ? 'text-[#3DA8FF]' : 'text-[#0098EA]'}>TON</span>
       <span className={dark ? 'text-white/35' : 'text-black/25'}>/</span>
       <span className={dark ? 'text-white/55' : 'text-black/45'}>USD</span>
-      <span className={dark ? 'text-white/95' : 'text-black/85'}>{formatted}</span>
+      <span className={dark ? 'text-white/95' : 'text-black/85'}>
+        {formatted}
+      </span>
       <ExternalLink
         className={`size-2.5 shrink-0 ${
           dark
@@ -103,7 +107,7 @@ export function TonPriceTicker({ variant = 'fixed' }: { variant?: Variant }) {
     );
   }
 
-  if (onLanding && overDark) {
+  if (onDocs || (onLanding && overDark)) {
     return null;
   }
 

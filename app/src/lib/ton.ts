@@ -179,7 +179,8 @@ function parseMaster(
 
   let adminAddr: Address | null = null;
   try {
-    if (master.admin_address) adminAddr = Address.parse(master.admin_address as string);
+    if (master.admin_address)
+      adminAddr = Address.parse(master.admin_address as string);
   } catch {
     /* addr_none */
   }
@@ -194,14 +195,17 @@ function parseMaster(
     mintable: Boolean(master.mintable),
     adminAddress: adminAddr,
     metadata: {
-      name: (typeof metaEntry?.name === 'string' && metaEntry.name) || undefined,
+      name:
+        (typeof metaEntry?.name === 'string' && metaEntry.name) || undefined,
       symbol:
-        (typeof metaEntry?.symbol === 'string' && metaEntry.symbol) || undefined,
+        (typeof metaEntry?.symbol === 'string' && metaEntry.symbol) ||
+        undefined,
       decimals:
         (metaEntry?.extra &&
         typeof metaEntry.extra === 'object' &&
         !Array.isArray(metaEntry.extra) &&
-        typeof (metaEntry.extra as Record<string, unknown>).decimals === 'string'
+        typeof (metaEntry.extra as Record<string, unknown>).decimals ===
+          'string'
           ? (metaEntry.extra as Record<string, string>).decimals
           : undefined) ||
         (typeof jettonContent?.decimals === 'string'
@@ -214,7 +218,8 @@ function parseMaster(
       image:
         (typeof metaEntry?.image === 'string' && metaEntry.image) || undefined,
       twitter: readMetaString(metaEntry, 'twitter') ?? socialFromLinks.twitter,
-      telegram: readMetaString(metaEntry, 'telegram') ?? socialFromLinks.telegram,
+      telegram:
+        readMetaString(metaEntry, 'telegram') ?? socialFromLinks.telegram,
       website:
         readMetaString(metaEntry, 'website') ??
         parseWebsitesJson(readMetaString(metaEntry, 'websites')),

@@ -12,12 +12,9 @@ import {
 import { DeployPage } from './pages/DeployPage';
 import { ManagePage } from './pages/ManagePage';
 import { LaunchpadPage } from './pages/LaunchpadPage';
-import { DocsPage } from './pages/DocsPage';
 import { LandingPage } from './pages/LandingPage';
+import { DocsPage } from './pages/DocsPage';
 import { OFLogo } from './pages/LandingPage';
-import { TelegramIcon } from '@/components/TelegramIcon';
-import { XIcon } from '@/components/XIcon';
-import { GITHUB_REPO_URL, TELEGRAM_COMMUNITY_URL, X_URL } from '@/lib/siteLinks';
 import { TonPriceTicker } from '@/components/TonPriceTicker';
 import { useRouter } from './lib/router';
 
@@ -35,15 +32,19 @@ export default function App() {
     };
   }, [tonConnectUI, page]);
 
+  const showAppChrome = page !== 'landing' && page !== 'docs';
+
   return (
     <>
-      <TonPriceTicker />
+      {showAppChrome ? <TonPriceTicker /> : null}
       {page === 'landing' ? (
         <LandingPage
           onLaunch={() =>
             window.open('/create', '_blank', 'noopener,noreferrer')
           }
         />
+      ) : page === 'docs' ? (
+        <DocsPage />
       ) : (
         <div className="min-h-full flex flex-col">
           <header
@@ -68,27 +69,33 @@ export default function App() {
                 className="flex gap-0.5 p-[3px] h-10 rounded-full items-center max-sm:h-9"
                 style={{ background: '#F0F1F3' }}
               >
-                {(['create', 'launchpad', 'manage', 'docs'] as const).map((p) => (
-                  <Button
-                    key={p}
-                    variant="ghost"
-                    size="sm"
-                    className={`rounded-full px-4 h-[34px] text-[15px] font-bold max-sm:h-[30px] max-sm:px-3 max-sm:text-[13px] hover:bg-transparent ${
-                      page === p
-                        ? 'bg-[#0098EA] text-white hover:bg-[#0098EA] hover:text-white'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                    onClick={() => go(p)}
-                  >
-                    {p === 'create'
-                      ? 'Create'
-                      : p === 'launchpad'
-                        ? 'Launchpad'
-                        : p === 'docs'
-                          ? 'Docs'
+                {(['create', 'launchpad', 'manage'] as const).map((p) => (
+                    <Button
+                      key={p}
+                      variant="ghost"
+                      size="sm"
+                      className={`rounded-full px-4 h-[34px] text-[15px] font-bold max-sm:h-[30px] max-sm:px-3 max-sm:text-[13px] hover:bg-transparent ${
+                        page === p
+                          ? 'bg-[#0098EA] text-white hover:bg-[#0098EA] hover:text-white'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                      onClick={() => go(p)}
+                    >
+                      {p === 'create'
+                        ? 'Create'
+                        : p === 'launchpad'
+                          ? 'Launchpad'
                           : 'Manage'}
-                  </Button>
-                ))}
+                    </Button>
+                  ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full px-4 h-[34px] text-[15px] font-bold max-sm:h-[30px] max-sm:px-3 max-sm:text-[13px] hover:bg-transparent text-muted-foreground hover:text-foreground"
+                  asChild
+                >
+                  <a href="/docs">Docs</a>
+                </Button>
               </nav>
             </div>
             <div className="flex items-center gap-2.5">
@@ -108,35 +115,6 @@ export default function App() {
                   Mainnet
                 </Button>
               )}
-              <a
-                href={X_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex size-10 items-center justify-center rounded-full border border-black/[0.08] text-foreground hover:bg-[#F0F1F3] hover:border-black/[0.12] transition-colors max-sm:size-9"
-                title="@openfragment on X"
-                aria-label="OpenFragment on X"
-              >
-                <XIcon className="size-[15px]" />
-              </a>
-              <a
-                href={GITHUB_REPO_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:inline-flex h-10 items-center justify-center rounded-full border border-black/[0.08] px-3 text-[13px] font-bold text-muted-foreground hover:bg-[#F0F1F3] hover:text-foreground transition-colors"
-                title="Source on GitHub"
-              >
-                GitHub
-              </a>
-              <a
-                href={TELEGRAM_COMMUNITY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex size-10 items-center justify-center rounded-full border border-black/[0.08] text-[#229ED9] hover:bg-[#F0F1F3] hover:border-black/[0.12] transition-colors max-sm:size-9"
-                title="OPENFRAGMENT on Telegram"
-                aria-label="Telegram community"
-              >
-                <TelegramIcon className="size-[18px]" />
-              </a>
               <TonConnectButton />
             </div>
           </header>
@@ -144,19 +122,13 @@ export default function App() {
           <main
             key={page}
             className={`of-page-enter flex-1 w-full mx-auto px-6 pt-24 pb-15 max-sm:px-4 max-sm:pt-28 max-sm:pb-12 ${
-              page === 'launchpad'
-                ? 'max-w-[1140px]'
-                : page === 'docs'
-                  ? 'max-w-[1080px]'
-                  : 'max-w-[960px]'
+              page === 'launchpad' ? 'max-w-[1140px]' : 'max-w-[960px]'
             }`}
           >
             {page === 'create' ? (
               <DeployPage network={network} />
             ) : page === 'launchpad' ? (
               <LaunchpadPage network={network} />
-            ) : page === 'docs' ? (
-              <DocsPage />
             ) : (
               <ManagePage
                 network={network}

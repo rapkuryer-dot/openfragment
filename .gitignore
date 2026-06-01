@@ -38,3 +38,4 @@ global.libraries.toml
 # coverage
 lcov.info
 gen/
+.vercel

@@ -14,7 +14,9 @@ async function timed(label, fn) {
     return { ms, ok: true, result };
   } catch (e) {
     const ms = Math.round(performance.now() - t0);
-    console.log(`  ${label}: ${ms}ms FAIL (${e instanceof Error ? e.message : e})`);
+    console.log(
+      `  ${label}: ${ms}ms FAIL (${e instanceof Error ? e.message : e})`,
+    );
     return { ms, ok: false };
   }
 }

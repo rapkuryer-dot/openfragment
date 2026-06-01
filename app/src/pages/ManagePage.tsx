@@ -542,7 +542,12 @@ function JettonInfoCard({
             DEX &amp; explorers
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
-            <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 text-xs"
+            >
               <a
                 href={tonviewerJettonUrl(network, friendlyJetton)}
                 target="_blank"
@@ -551,7 +556,12 @@ function JettonInfoCard({
                 Tonviewer
               </a>
             </Button>
-            <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 text-xs"
+            >
               <a
                 href={tonscanJettonUrl(friendlyJetton)}
                 target="_blank"
@@ -560,7 +570,12 @@ function JettonInfoCard({
                 Tonscan
               </a>
             </Button>
-            <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 text-xs"
+            >
               <a
                 href={dyorTokenUrl(friendlyJetton)}
                 target="_blank"
@@ -569,7 +584,12 @@ function JettonInfoCard({
                 DYOR.io
               </a>
             </Button>
-            <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 text-xs"
+            >
               <a
                 href={stonFiSwapTonToJettonUrl(friendlyJetton)}
                 target="_blank"
@@ -579,7 +599,12 @@ function JettonInfoCard({
               </a>
             </Button>
             {walletAddress?.trim() ? (
-              <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 text-xs"
+              >
                 <a
                   href={dedustPortfolioUrl(walletAddress.trim())}
                   target="_blank"
@@ -1372,9 +1397,10 @@ function AdminTab({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Tonscan uses TonAPI, which merges <code className="text-[11px]">social</code>{' '}
-            from this JSON when the on-chain <code className="text-[11px]">uri</code> key
-            points here (TEP-64 semi-chain).
+            Tonscan uses TonAPI, which merges{' '}
+            <code className="text-[11px]">social</code> from this JSON when the
+            on-chain <code className="text-[11px]">uri</code> key points here
+            (TEP-64 semi-chain).
           </p>
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -1419,7 +1445,8 @@ function AdminTab({
             disabled={loading}
           />
           <p className="text-xs text-muted-foreground">
-            Changing admin sets a pending admin that must be claimed. Use “Revoke admin” to permanently drop admin access.
+            Changing admin sets a pending admin that must be claimed. Use
+            “Revoke admin” to permanently drop admin access.
           </p>
         </div>
         <Button

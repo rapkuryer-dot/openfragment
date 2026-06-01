@@ -11,6 +11,7 @@ import {
   UploadCloud,
   X as XIcon,
   Image as ImageIcon,
+  Rocket,
 } from 'lucide-react';
 import { buildDeployMessage, parseUnits } from '../lib/deploy';
 import {
@@ -112,7 +113,10 @@ export function DeployPage({ network }: Props) {
       return;
     }
 
-    if (network === 'mainnet' && mainnetConfirm.trim().toUpperCase() !== 'DEPLOY') {
+    if (
+      network === 'mainnet' &&
+      mainnetConfirm.trim().toUpperCase() !== 'DEPLOY'
+    ) {
       setStatus({
         type: 'error',
         message: 'Type DEPLOY to confirm mainnet deployment',
@@ -331,10 +335,12 @@ export function DeployPage({ network }: Props) {
                   <AlertCircle className="size-4" />
                   <div className="space-y-1">
                     <AlertTitle>
-                      Mainnet deployment. Use a dedicated wallet with limited TON.
+                      Mainnet deployment. Use a dedicated wallet with limited
+                      TON.
                     </AlertTitle>
                     <p className="text-sm text-muted-foreground">
-                      Never share seed/private keys. Verify the address, amount, and network in your wallet before signing.
+                      Never share seed/private keys. Verify the address, amount,
+                      and network in your wallet before signing.
                     </p>
                   </div>
                 </Alert>
@@ -428,7 +434,8 @@ export function DeployPage({ network }: Props) {
                   inputRef={fileInputRef}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Drag &amp; drop or click. PNG/JPEG/WebP up to 96&nbsp;KB — embedded on-chain so explorers always render your logo.
+                  Drag &amp; drop or click. PNG/JPEG/WebP up to 96&nbsp;KB —
+                  embedded on-chain so explorers always render your logo.
                 </p>
               </div>
 
@@ -569,7 +576,12 @@ type ImageFileData = {
 };
 
 const MAX_IMAGE_BYTES = 96 * 1024;
-const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const ALLOWED_IMAGE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+];
 
 async function readImageFile(file: File): Promise<ImageFileData | string> {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -581,7 +593,8 @@ async function readImageFile(file: File): Promise<ImageFileData | string> {
   const buf = await file.arrayBuffer();
   const bytes = new Uint8Array(buf);
   let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+  for (let i = 0; i < bytes.length; i++)
+    binary += String.fromCharCode(bytes[i]!);
   const base64 = btoa(binary);
   return {
     name: file.name,
@@ -628,7 +641,8 @@ function ImageDropzone({
         <div className="flex-1 min-w-0">
           <div className="text-sm font-semibold truncate">{file.name}</div>
           <div className="text-xs text-muted-foreground font-mono">
-            {(file.size / 1024).toFixed(1)} KB · {file.type.replace('image/', '').toUpperCase()}
+            {(file.size / 1024).toFixed(1)} KB ·{' '}
+            {file.type.replace('image/', '').toUpperCase()}
           </div>
         </div>
         <button
@@ -678,13 +692,18 @@ function ImageDropzone({
           : 'border-border bg-muted/20 hover:border-[#0098EA]/60 hover:bg-muted/40'
       } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      <div className={`size-11 rounded-full flex items-center justify-center transition-colors ${dragOver ? 'bg-[#0098EA] text-white' : 'bg-[#0098EA]/10 text-[#0098EA] group-hover:bg-[#0098EA]/15'}`}>
+      <div
+        className={`size-11 rounded-full flex items-center justify-center transition-colors ${dragOver ? 'bg-[#0098EA] text-white' : 'bg-[#0098EA]/10 text-[#0098EA] group-hover:bg-[#0098EA]/15'}`}
+      >
         <UploadCloud className="size-5" />
       </div>
       <div className="text-sm font-semibold">
-        {dragOver ? 'Drop image here' : (
+        {dragOver ? (
+          'Drop image here'
+        ) : (
           <>
-            <span className="text-[#0098EA]">Click to upload</span> or drag &amp; drop
+            <span className="text-[#0098EA]">Click to upload</span> or drag
+            &amp; drop
           </>
         )}
       </div>
@@ -738,8 +757,7 @@ function DeployedCard({
   walletAddress: string | null;
 }) {
   const [copied, setCopied] = useState(false);
-  const friendly =
-    tryFriendlyJettonAddress(address, network) ?? address.trim();
+  const friendly = tryFriendlyJettonAddress(address, network) ?? address.trim();
 
   return (
     <Card>
@@ -753,9 +771,20 @@ function DeployedCard({
         <div className="text-base font-bold mb-1.5">Jetton Deployed</div>
         <p className="text-sm text-muted-foreground mb-4.5">
           Your contract is live on{' '}
-          {network === 'mainnet' ? 'Mainnet' : 'Testnet'}
+          {network === 'mainnet' ? 'Mainnet' : 'Testnet'}. It is listed on the
+          public launchpad for all visitors.
         </p>
         <div className="flex items-center justify-center gap-2.5 flex-wrap">
+          <Button
+            asChild
+            className="rounded-full h-10 font-bold"
+            style={{ background: '#0098EA' }}
+          >
+            <a href="/launchpad">
+              <Rocket className="size-4" />
+              View on Launchpad
+            </a>
+          </Button>
           <Button asChild className="rounded-full h-10">
             <a
               href={tonviewerJettonUrl(network, friendly)}
@@ -788,7 +817,12 @@ function DeployedCard({
             DEX &amp; explorers
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
-            <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 text-xs"
+            >
               <a
                 href={tonscanJettonUrl(friendly)}
                 target="_blank"
@@ -797,7 +831,12 @@ function DeployedCard({
                 Tonscan
               </a>
             </Button>
-            <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 text-xs"
+            >
               <a
                 href={dyorTokenUrl(friendly)}
                 target="_blank"
@@ -806,7 +845,12 @@ function DeployedCard({
                 DYOR.io
               </a>
             </Button>
-            <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full h-8 text-xs"
+            >
               <a
                 href={stonFiSwapTonToJettonUrl(friendly)}
                 target="_blank"
@@ -816,7 +860,12 @@ function DeployedCard({
               </a>
             </Button>
             {walletAddress?.trim() ? (
-              <Button asChild variant="outline" size="sm" className="rounded-full h-8 text-xs">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 text-xs"
+              >
                 <a
                   href={dedustPortfolioUrl(walletAddress.trim())}
                   target="_blank"

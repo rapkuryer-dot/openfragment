@@ -2,6 +2,7 @@ import { Address } from '@ton/core';
 import {
   buildLaunchpadDemoTokens,
   isDemoLaunchpadAddress,
+  isLaunchpadDemoEnabled,
 } from './launchpadDemo';
 import { fetchJettonMasters, type Network } from './ton';
 
@@ -220,7 +221,9 @@ async function fetchTonUsdCached(): Promise<number | undefined> {
 }
 
 function graduationTargetUsd(tonUsd: number | undefined): number {
-  return tonUsd != null ? GRADUATION_TON * tonUsd : DEFAULT_GRADUATION_TARGET_USD;
+  return tonUsd != null
+    ? GRADUATION_TON * tonUsd
+    : DEFAULT_GRADUATION_TARGET_USD;
 }
 
 function tokenFromRegistry(
@@ -276,12 +279,17 @@ function mergeTokens(
   return tokens;
 }
 
-/** Synchronous snapshot for instant first paint (demo cards only). */
+/** Synchronous snapshot for instant first paint (demo cards only, dev builds). */
 export function getLaunchpadDemoSnapshot(network: Network): LaunchpadToken[] {
+  if (!isLaunchpadDemoEnabled()) return [];
   return buildLaunchpadDemoTokens(
     network,
     DEFAULT_GRADUATION_TARGET_USD,
   ) as LaunchpadToken[];
+}
+
+export function isRealLaunchpadToken(t: LaunchpadToken): boolean {
+  return !t.isDemo && !isDemoLaunchpadAddress(t.address);
 }
 
 async function mapPool<T, R>(
@@ -328,7 +336,8 @@ async function fetchPriceUsd(
       'dex_usd_price',
     ]) {
       const v = a[k];
-      const n = typeof v === 'string' ? parseFloat(v) : typeof v === 'number' ? v : NaN;
+      const n =
+        typeof v === 'string' ? parseFloat(v) : typeof v === 'number' ? v : NaN;
       if (Number.isFinite(n) && n > 0) return n;
     }
   } catch {
@@ -337,7 +346,10 @@ async function fetchPriceUsd(
   return undefined;
 }
 
-function applyGraduationTarget(tokens: LaunchpadToken[], targetUsd: number): LaunchpadToken[] {
+function applyGraduationTarget(
+  tokens: LaunchpadToken[],
+  targetUsd: number,
+): LaunchpadToken[] {
   return tokens.map((t) => {
     const next = { ...t, graduationTargetUsd: targetUsd };
     if (t.marketCapUsd != null) {
@@ -360,12 +372,7 @@ export async function fetchLaunchpadShell(
     Promise.resolve(getLocalDeploys().filter((t) => t.network === network)),
   ]);
 
-  return mergeTokens(
-    network,
-    registry,
-    local,
-    DEFAULT_GRADUATION_TARGET_USD,
-  );
+  return mergeTokens(network, registry, local, DEFAULT_GRADUATION_TARGET_USD);
 }
 
 /** Enrich real tokens from chain + STON; demo-only returns immediately. */
@@ -469,7 +476,9 @@ export async function enrichLaunchpadTokens(
   return out;
 }
 
-export async function fetchLaunchpad(network: Network): Promise<LaunchpadToken[]> {
+export async function fetchLaunchpad(
+  network: Network,
+): Promise<LaunchpadToken[]> {
   const shell = await fetchLaunchpadShell(network);
   if (shell.length === 0) return shell;
   return enrichLaunchpadTokens(network, shell);

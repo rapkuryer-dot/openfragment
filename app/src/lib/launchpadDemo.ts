@@ -5,6 +5,11 @@ export function isDemoLaunchpadAddress(address: string): boolean {
   return address.startsWith('0:ded');
 }
 
+/** Build-time flag — default false (see vite.config.ts). */
+export function isLaunchpadDemoEnabled(): boolean {
+  return import.meta.env.VITE_LAUNCHPAD_DEMO === 'true';
+}
+
 const DEMO_NAMES: { name: string; symbol: string; seed: string }[] = [
   { name: 'Fragment Pepe', symbol: 'FPEPE', seed: 'fpepe' },
   { name: 'Open Moon', symbol: 'OMOON', seed: 'omoon' },
@@ -56,8 +61,7 @@ export function buildLaunchpadDemoTokens(
   graduationTargetUsd: number,
 ) {
   if (network !== 'mainnet') return [];
-  // On by default (set VITE_LAUNCHPAD_DEMO=false to hide preview rows).
-  if (import.meta.env.VITE_LAUNCHPAD_DEMO === 'false') return [];
+  if (!isLaunchpadDemoEnabled()) return [];
 
   const now = Date.now();
   const supply = 1_000_000_000;

@@ -133,10 +133,9 @@ export async function uploadImageToCatbox(
   const origin = window.location.origin;
 
   const toBlob = () =>
-    new Blob(
-      [Uint8Array.from(atob(input.base64), (c) => c.charCodeAt(0))],
-      { type: input.mimeType },
-    );
+    new Blob([Uint8Array.from(atob(input.base64), (c) => c.charCodeAt(0))], {
+      type: input.mimeType,
+    });
 
   const tryParseUrl = async (res: Response, label: string) => {
     const text = (await res.text()).trim();
@@ -202,7 +201,8 @@ function resolveJsonBlobPublicUrl(locationOrId: string | null): string | null {
   const loc = locationOrId.trim();
   if (!loc) return null;
   if (loc.startsWith('https://')) return loc;
-  if (loc.startsWith('http://')) return `https://${loc.slice('http://'.length)}`;
+  if (loc.startsWith('http://'))
+    return `https://${loc.slice('http://'.length)}`;
   if (loc.startsWith('/')) return `https://jsonblob.com${loc}`;
   return `https://jsonblob.com/api/jsonBlob/${loc.replace(/^\/+/, '')}`;
 }
@@ -215,7 +215,10 @@ function pickJsonBlobUrlFromResponse(r: Response): string | null {
   if (fromHeader) return fromHeader;
   try {
     const u = new URL(r.url);
-    if (u.hostname === 'jsonblob.com' && u.pathname.startsWith('/api/jsonBlob/')) {
+    if (
+      u.hostname === 'jsonblob.com' &&
+      u.pathname.startsWith('/api/jsonBlob/')
+    ) {
       return `${u.origin}${u.pathname}`;
     }
   } catch {

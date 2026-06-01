@@ -19,6 +19,8 @@ import {
 } from '../lib/platformFees';
 import { GRADUATION_TON, GRADUATION_NEAR } from '../lib/launchpad';
 import { XIcon } from '@/components/XIcon';
+import { TelegramIcon } from '@/components/TelegramIcon';
+import { OFLogo } from '@/pages/LandingPage';
 import {
   GITHUB_REPO_URL,
   SUPPORT_EMAIL,
@@ -65,7 +67,63 @@ export function DocsPage() {
   }, []);
 
   return (
-    <div className="pb-16">
+    <div className="min-h-screen bg-white">
+      <header
+        className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/95 backdrop-blur-md"
+        aria-label="Documentation site header"
+      >
+        <div className="mx-auto flex h-[56px] max-w-[1200px] items-center justify-between gap-4 px-6 max-sm:px-4">
+          <a
+            href="/"
+            className="flex min-w-0 items-center gap-2.5 text-[16px] font-bold hover:opacity-80 transition-opacity"
+            title="Back to home"
+          >
+            <OFLogo size={28} />
+            <span className="font-display tracking-tight truncate">
+              OPEN<span className="text-[#0098EA]">FRAGMENT</span>
+            </span>
+          </a>
+          <nav
+            className="flex items-center gap-1 max-sm:gap-0.5"
+            aria-label="Documentation navigation"
+          >
+            <DocsTopLink href="/">Home</DocsTopLink>
+            <DocsTopLink href="/create">Create</DocsTopLink>
+            <DocsTopLink href="/launchpad">Launchpad</DocsTopLink>
+            <DocsTopLink href="/manage">Manage</DocsTopLink>
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex h-9 items-center rounded-full px-3 text-[13px] font-semibold text-muted-foreground hover:bg-[#F0F1F3] hover:text-foreground transition-colors"
+            >
+              GitHub
+            </a>
+            <a
+              href={X_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex size-9 items-center justify-center rounded-full text-foreground hover:bg-[#F0F1F3] transition-colors"
+              title="@openfragment on X"
+              aria-label="X"
+            >
+              <XIcon className="size-3.5" />
+            </a>
+            <a
+              href={TELEGRAM_COMMUNITY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex size-9 items-center justify-center rounded-full text-[#229ED9] hover:bg-[#F0F1F3] transition-colors"
+              title="Telegram"
+              aria-label="Telegram"
+            >
+              <TelegramIcon className="size-[17px]" />
+            </a>
+          </nav>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-[1200px] px-6 pb-20 pt-8 max-sm:px-4">
       <header className="mb-10 rounded-3xl border border-black/[0.06] bg-gradient-to-br from-[#0098EA]/8 via-white to-[#005EFF]/5 p-8 md:p-10">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#0098EA]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#0098EA]">
           <BookOpen className="size-3.5" />
@@ -90,10 +148,18 @@ export function DocsPage() {
               Launch a token
             </a>
           </Button>
-          <Button asChild variant="outline" className="rounded-full h-11 px-6 font-bold">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full h-11 px-6 font-bold"
+          >
             <a href="/launchpad">Browse launchpad</a>
           </Button>
-          <Button asChild variant="outline" className="rounded-full h-11 px-6 font-bold">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full h-11 px-6 font-bold"
+          >
             <a
               href={GITHUB_REPO_URL}
               target="_blank"
@@ -104,7 +170,11 @@ export function DocsPage() {
               <ExternalLink className="size-3.5" />
             </a>
           </Button>
-          <Button asChild variant="outline" className="rounded-full h-11 px-6 font-bold">
+          <Button
+            asChild
+            variant="outline"
+            className="rounded-full h-11 px-6 font-bold"
+          >
             <a
               href={X_URL}
               target="_blank"
@@ -121,7 +191,7 @@ export function DocsPage() {
 
       <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
         <nav
-          className="lg:sticky lg:top-24 shrink-0 lg:w-[200px] rounded-2xl border border-black/[0.06] bg-[#FAFAFB] p-3"
+          className="lg:sticky lg:top-[72px] shrink-0 lg:w-[200px] rounded-2xl border border-black/[0.06] bg-[#FAFAFB] p-3 max-h-[calc(100vh-88px)] lg:overflow-y-auto"
           aria-label="Documentation sections"
         >
           <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
@@ -158,10 +228,10 @@ export function DocsPage() {
               standard minter + wallet in one signed transaction.
             </p>
             <p className="mt-3 text-muted-foreground">
-              The site is a static dApp: we never hold your keys. Signing happens
-              only inside the wallet you choose. After deploy your token is
-              listed on the public launchpad and can be traded on STON.fi, DeDust,
-              and Tonviewer like any other TEP-74 jetton.
+              The site is a static dApp: we never hold your keys. Signing
+              happens only inside the wallet you choose. After deploy your token
+              is listed on the public launchpad and can be traded on STON.fi,
+              DeDust, and Tonviewer like any other TEP-74 jetton.
             </p>
             <ul className="mt-4 space-y-2 list-disc pl-5 text-muted-foreground">
               <li>
@@ -183,7 +253,10 @@ export function DocsPage() {
             </Callout>
           </DocSection>
 
-          <DocSection id="difference" title="How we differ from other TON launchpads">
+          <DocSection
+            id="difference"
+            title="How we differ from other TON launchpads"
+          >
             <p>
               Most meme launchpads on TON (hosted flows, bot-based deploys, or
               opaque bonding curves) expose your deployment to mempool watchers
@@ -231,17 +304,18 @@ export function DocsPage() {
             />
             <p className="mt-4 text-muted-foreground">
               We do not run a hidden bonding curve or hold your liquidity. After
-              deploy you own the admin wallet until you revoke it — same model as
-              a self-deployed jetton, with a guided UI and anti-snipe launch flow.
+              deploy you own the admin wallet until you revoke it — same model
+              as a self-deployed jetton, with a guided UI and anti-snipe launch
+              flow.
             </p>
           </DocSection>
 
           <DocSection id="wallets" title="Supported wallets">
             <p>
-              OpenFragment uses the open <strong>TON Connect 2</strong> standard.
-              When you click <strong>Connect Wallet</strong>, the app shows every
-              wallet your browser or Telegram session supports — you are not
-              limited to a single provider.
+              OpenFragment uses the open <strong>TON Connect 2</strong>{' '}
+              standard. When you click <strong>Connect Wallet</strong>, the app
+              shows every wallet your browser or Telegram session supports — you
+              are not limited to a single provider.
             </p>
             <ul className="mt-4 space-y-2 list-disc pl-5 text-muted-foreground">
               <li>
@@ -249,14 +323,14 @@ export function DocsPage() {
                 and extension
               </li>
               <li>
-                <strong className="text-foreground">MyTonWallet</strong> — browser
-                and desktop
+                <strong className="text-foreground">MyTonWallet</strong> —
+                browser and desktop
               </li>
               <li>
                 <strong className="text-foreground">Tonhub</strong>,{' '}
                 <strong className="text-foreground">OpenMask</strong>,{' '}
-                <strong className="text-foreground">XTON Wallet</strong> and other
-                TON Connect wallets
+                <strong className="text-foreground">XTON Wallet</strong> and
+                other TON Connect wallets
               </li>
               <li>
                 <strong className="text-foreground">Telegram Wallet</strong> —
@@ -265,10 +339,10 @@ export function DocsPage() {
               </li>
             </ul>
             <Callout title="Network">
-              Pick the same network in the wallet and in OpenFragment (mainnet for
-              production). If the wallet is on testnet while the app is on mainnet,
-              deploy will fail with a network mismatch — switch network in the
-              wallet and reconnect.
+              Pick the same network in the wallet and in OpenFragment (mainnet
+              for production). If the wallet is on testnet while the app is on
+              mainnet, deploy will fail with a network mismatch — switch network
+              in the wallet and reconnect.
             </Callout>
             <p className="mt-4 text-muted-foreground">
               Manage and Create use the same connection. You can disconnect and
@@ -279,9 +353,16 @@ export function DocsPage() {
           <DocSection id="deploy" title="Deploying a token">
             <ol className="space-y-4 list-decimal pl-5">
               <li>
-                Open <a href="/create" className="text-[#0098EA] font-semibold hover:underline">Create</a> and click{' '}
-                <strong>Connect Wallet</strong>. Choose Tonkeeper, MyTonWallet,
-                Telegram Wallet, or any other TON Connect option in the list.
+                Open{' '}
+                <a
+                  href="/create"
+                  className="text-[#0098EA] font-semibold hover:underline"
+                >
+                  Create
+                </a>{' '}
+                and click <strong>Connect Wallet</strong>. Choose Tonkeeper,
+                MyTonWallet, Telegram Wallet, or any other TON Connect option in
+                the list.
               </li>
               <li>
                 Upload a logo (validated server-side), set name, symbol,
@@ -306,7 +387,11 @@ export function DocsPage() {
               </li>
             </ol>
             <Callout title="Mainnet safety">
-              On mainnet you must type <code className="rounded bg-muted px-1.5 py-0.5 text-[13px]">DEPLOY</code> to confirm — this prevents accidental spends.
+              On mainnet you must type{' '}
+              <code className="rounded bg-muted px-1.5 py-0.5 text-[13px]">
+                DEPLOY
+              </code>{' '}
+              to confirm — this prevents accidental spends.
             </Callout>
           </DocSection>
 
@@ -323,14 +408,22 @@ export function DocsPage() {
             />
             <p className="mt-4 text-[13px] text-muted-foreground">
               Network gas for mint, transfer and DEX swaps is paid separately in
-              TON as usual. Revoking admin does not remove the transfer tax —
-              it is part of the deployed contract.
+              TON as usual. Revoking admin does not remove the transfer tax — it
+              is part of the deployed contract.
             </p>
           </DocSection>
 
           <DocSection id="launchpad" title="Public launchpad">
             <p>
-              The <a href="/launchpad" className="text-[#0098EA] font-semibold hover:underline">Launchpad</a> lists every token registered through OpenFragment. You do not need to connect a wallet to browse.
+              The{' '}
+              <a
+                href="/launchpad"
+                className="text-[#0098EA] font-semibold hover:underline"
+              >
+                Launchpad
+              </a>{' '}
+              lists every token registered through OpenFragment. You do not need
+              to connect a wallet to browse.
             </p>
             <ul className="mt-3 space-y-2 list-disc pl-5 text-muted-foreground">
               <li>Live supply and metadata from Toncenter</li>
@@ -349,14 +442,21 @@ export function DocsPage() {
               browsers and devices — no wallet needed to browse.
             </p>
             <p className="mt-3 text-muted-foreground">
-              Cards load in two stages: the list appears immediately, then on-chain
-              supply and DEX prices refresh in the background.
+              Cards load in two stages: the list appears immediately, then
+              on-chain supply and DEX prices refresh in the background.
             </p>
           </DocSection>
 
           <DocSection id="manage" title="Managing your jetton">
             <p>
-              Open <a href="/manage" className="text-[#0098EA] font-semibold hover:underline">Manage</a> and paste your jetton master address.
+              Open{' '}
+              <a
+                href="/manage"
+                className="text-[#0098EA] font-semibold hover:underline"
+              >
+                Manage
+              </a>{' '}
+              and paste your jetton master address.
             </p>
             <ul className="mt-3 space-y-2 list-disc pl-5 text-muted-foreground">
               <li>Mint additional supply (while admin is active)</li>
@@ -368,11 +468,11 @@ export function DocsPage() {
 
           <DocSection id="contracts" title="Smart contracts">
             <p>
-              Jetton minter and wallet are written in{' '}
-              <strong>Tolk</strong>, built with <strong>Acton</strong>, and
-              follow <strong>TEP-74</strong> / <strong>TEP-64</strong>. Platform
-              fee config (treasury + {TRANSFER_FEE_PERCENT}% transfer tax) is
-              stored in minter storage at deploy time.
+              Jetton minter and wallet are written in <strong>Tolk</strong>,
+              built with <strong>Acton</strong>, and follow{' '}
+              <strong>TEP-74</strong> / <strong>TEP-64</strong>. Platform fee
+              config (treasury + {TRANSFER_FEE_PERCENT}% transfer tax) is stored
+              in minter storage at deploy time.
             </p>
             <p className="mt-3 text-muted-foreground">
               Public source — frontend, documentation UI, and Tolk contracts:{' '}
@@ -481,9 +581,9 @@ export function DocsPage() {
 
           <DocSection id="support" title="Support & contact">
             <p>
-              For bugs, partnership questions, or help with a stuck deploy, reach
-              us through any channel below. Include your jetton address and a
-              screenshot of the wallet error if something failed on-chain.
+              For bugs, partnership questions, or help with a stuck deploy,
+              reach us through any channel below. Include your jetton address
+              and a screenshot of the wallet error if something failed on-chain.
             </p>
             <ul className="mt-4 space-y-3">
               <li className="rounded-2xl border border-black/[0.06] bg-[#FAFAFB] px-4 py-3.5">
@@ -535,7 +635,25 @@ export function DocsPage() {
           </DocSection>
         </article>
       </div>
+      </div>
     </div>
+  );
+}
+
+function DocsTopLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-semibold text-muted-foreground hover:bg-[#F0F1F3] hover:text-foreground transition-colors max-sm:px-2 max-sm:text-[12px]"
+    >
+      {children}
+    </a>
   );
 }
 
@@ -549,7 +667,7 @@ function DocSection({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-28">
+    <section id={id} className="scroll-mt-[88px]">
       <h2 className="font-display text-[22px] md:text-[26px] font-bold tracking-tight text-[#0A0A0B]">
         {title}
       </h2>
@@ -558,7 +676,13 @@ function DocSection({
   );
 }
 
-function Callout({ title, children }: { title: string; children: React.ReactNode }) {
+function Callout({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="mt-5 rounded-2xl border border-[#0098EA]/20 bg-[#0098EA]/5 px-4 py-3.5">
       <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#0098EA]">
@@ -569,11 +693,7 @@ function Callout({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function CompareTable({
-  rows,
-}: {
-  rows: [string, string, string][];
-}) {
+function CompareTable({ rows }: { rows: [string, string, string][] }) {
   return (
     <div className="mt-5 overflow-x-auto rounded-2xl border border-black/[0.06]">
       <table className="w-full min-w-[520px] text-left text-[13px]">
@@ -588,7 +708,10 @@ function CompareTable({
         </thead>
         <tbody>
           {rows.map(([topic, us, them]) => (
-            <tr key={topic} className="border-b border-black/[0.04] last:border-0">
+            <tr
+              key={topic}
+              className="border-b border-black/[0.04] last:border-0"
+            >
               <td className="px-4 py-3 font-semibold">{topic}</td>
               <td className="px-4 py-3">{us}</td>
               <td className="px-4 py-3 text-muted-foreground">{them}</td>
@@ -616,7 +739,9 @@ function FeeRow({
         {label}
       </div>
       <div className="text-right">
-        <div className="font-display text-[18px] font-bold text-[#0098EA]">{value}</div>
+        <div className="font-display text-[18px] font-bold text-[#0098EA]">
+          {value}
+        </div>
         <div className="text-[12px] text-muted-foreground">{detail}</div>
       </div>
     </div>

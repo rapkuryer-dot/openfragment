@@ -20,8 +20,10 @@ import {
   getLaunchpadDemoSnapshot,
   GRADUATION_TON,
   GRADUATION_NEAR,
+  isRealLaunchpadToken,
   type LaunchpadToken,
 } from '../lib/launchpad';
+import { isLaunchpadDemoEnabled } from '../lib/launchpadDemo';
 import {
   tonviewerJettonUrl,
   stonFiSwapTonToJettonUrl,
@@ -40,29 +42,34 @@ interface Props {
 type ViewKey = 'new' | 'mcap' | 'supply' | 'graduated';
 
 export function LaunchpadPage({ network }: Props) {
+  const demoPreview = isLaunchpadDemoEnabled();
+
   const shellQuery = useQuery({
     queryKey: ['launchpad', network, 'shell'],
     queryFn: () => fetchLaunchpadShell(network),
-    initialData: () => getLaunchpadDemoSnapshot(network),
+    ...(demoPreview
+      ? { initialData: () => getLaunchpadDemoSnapshot(network) }
+      : {}),
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     refetchOnWindowFocus: false,
   });
 
+  const shellTokens = (shellQuery.data ?? []).filter(isRealLaunchpadToken);
+
   const enrichQuery = useQuery({
     queryKey: ['launchpad', network, 'enrich'],
     queryFn: () => enrichLaunchpadTokens(network, shellQuery.data!),
-    enabled: shellQuery.isSuccess && (shellQuery.data?.length ?? 0) > 0,
+    enabled: shellQuery.isSuccess && shellTokens.length > 0,
     staleTime: 120_000,
     refetchInterval: 5 * 60_000,
     placeholderData: (prev) => prev ?? shellQuery.data,
   });
 
-  const data = enrichQuery.data ?? shellQuery.data;
-  const isLoading =
-    shellQuery.isLoading &&
-    !shellQuery.data?.length &&
-    !getLaunchpadDemoSnapshot(network).length;
+  const data = (enrichQuery.data ?? shellQuery.data)?.filter(
+    isRealLaunchpadToken,
+  );
+  const isLoading = shellQuery.isPending;
   const isFetching =
     shellQuery.isFetching || (enrichQuery.isFetching && enrichQuery.isEnabled);
   const isError = shellQuery.isError;
@@ -157,13 +164,25 @@ export function LaunchpadPage({ network }: Props) {
             className="flex items-center gap-0.5 rounded-full p-[3px]"
             style={{ background: '#F0F1F3' }}
           >
-            <ViewButton active={view === 'new'} onClick={() => setView('new')} icon={<Clock className="size-3.5" />}>
+            <ViewButton
+              active={view === 'new'}
+              onClick={() => setView('new')}
+              icon={<Clock className="size-3.5" />}
+            >
               New
             </ViewButton>
-            <ViewButton active={view === 'mcap'} onClick={() => setView('mcap')} icon={<TrendingUp className="size-3.5" />}>
+            <ViewButton
+              active={view === 'mcap'}
+              onClick={() => setView('mcap')}
+              icon={<TrendingUp className="size-3.5" />}
+            >
               Mcap
             </ViewButton>
-            <ViewButton active={view === 'supply'} onClick={() => setView('supply')} icon={<Flame className="size-3.5" />}>
+            <ViewButton
+              active={view === 'supply'}
+              onClick={() => setView('supply')}
+              icon={<Flame className="size-3.5" />}
+            >
               Supply
             </ViewButton>
             <ViewButton
@@ -183,7 +202,9 @@ export function LaunchpadPage({ network }: Props) {
             title="Refresh"
             className="rounded-full border border-black/[0.08] size-10 hover:bg-[#F0F1F3]"
           >
-            <RefreshCw className={`size-4 ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`size-4 ${isFetching ? 'animate-spin' : ''}`}
+            />
           </Button>
         </div>
       </div>
@@ -209,8 +230,9 @@ export function LaunchpadPage({ network }: Props) {
               ? 'Try a different name, symbol or address.'
               : view === 'graduated'
                 ? `Tokens appear here once they approach the ${GRADUATION_TON.toLocaleString('en-US')} TON migration target.`
-                : 'Be the first — deploy a jetton from the Create tab and it will appear here.'
+                : 'Be the first — deploy a jetton from Create and it will appear here for everyone within a few seconds.'
           }
+          showCreateCta={!query && view !== 'graduated'}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -354,7 +376,9 @@ function TokenCard({
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Metric
           label="Mcap"
-          value={token.marketCapUsd != null ? formatUsd(token.marketCapUsd) : '—'}
+          value={
+            token.marketCapUsd != null ? formatUsd(token.marketCapUsd) : '—'
+          }
           hint={token.marketCapUsd == null ? 'No liquidity yet' : undefined}
           accent
         />
@@ -445,7 +469,9 @@ function MigrationBar({ token }: { token: LaunchpadToken }) {
         <span className="text-muted-foreground">
           {graduated ? 'Migrated to DEX' : 'Migration progress'}
         </span>
-        <span className={graduated ? 'text-[var(--success)]' : 'text-[#0098EA]'}>
+        <span
+          className={graduated ? 'text-[var(--success)]' : 'text-[#0098EA]'}
+        >
           {pct.toFixed(pct < 10 ? 1 : 0)}%
         </span>
       </div>
@@ -556,7 +582,15 @@ function SkeletonGrid() {
   );
 }
 
-function EmptyBox({ title, desc }: { title: string; desc: string }) {
+function EmptyBox({
+  title,
+  desc,
+  showCreateCta,
+}: {
+  title: string;
+  desc: string;
+  showCreateCta?: boolean;
+}) {
   return (
     <Card>
       <CardContent className="flex min-h-[260px] flex-col items-center justify-center text-center">
@@ -567,6 +601,18 @@ function EmptyBox({ title, desc }: { title: string; desc: string }) {
         <p className="mt-1.5 max-w-[360px] text-sm text-muted-foreground">
           {desc}
         </p>
+        {showCreateCta ? (
+          <Button
+            asChild
+            className="mt-6 rounded-full h-11 px-8 font-bold"
+            style={{ background: '#0098EA' }}
+          >
+            <a href="/create">
+              <Rocket className="size-4" />
+              Create your token
+            </a>
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );
