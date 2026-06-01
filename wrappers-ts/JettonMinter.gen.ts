@@ -166,6 +166,7 @@ class StackReader {
 
 type coins = bigint
 
+type uint16 = bigint
 type uint64 = bigint
 type uint256 = bigint
 
@@ -813,6 +814,8 @@ export const TopUpTons = {
  >     adminAddress: address?
  >     nextAdminAddress: address?
  >     metadata: cell
+ >     platformTreasury: address?
+ >     transferFeeBps: uint16
  > }
  */
 export interface MinterStorage {
@@ -821,6 +824,8 @@ export interface MinterStorage {
     adminAddress: c.Address | null
     nextAdminAddress: c.Address | null
     metadata: c.Cell
+    platformTreasury: c.Address | null
+    transferFeeBps: uint16
 }
 
 export const MinterStorage = {
@@ -829,6 +834,8 @@ export const MinterStorage = {
         adminAddress: c.Address | null
         nextAdminAddress: c.Address | null
         metadata: c.Cell
+        platformTreasury: c.Address | null
+        transferFeeBps: uint16
     }): MinterStorage {
         return {
             $: 'MinterStorage',
@@ -842,6 +849,8 @@ export const MinterStorage = {
             adminAddress: s.loadMaybeAddress(),
             nextAdminAddress: s.loadMaybeAddress(),
             metadata: s.loadRef(),
+            platformTreasury: s.loadMaybeAddress(),
+            transferFeeBps: s.loadUintBig(16),
         }
     },
     store(self: MinterStorage, b: c.Builder): void {
@@ -849,6 +858,8 @@ export const MinterStorage = {
         b.storeAddress(self.adminAddress);
         b.storeAddress(self.nextAdminAddress);
         b.storeRef(self.metadata);
+        b.storeAddress(self.platformTreasury);
+        b.storeUint(self.transferFeeBps, 16);
     },
     toCell(self: MinterStorage): c.Cell {
         return makeCellFrom<MinterStorage>(self, MinterStorage.store);
@@ -990,7 +1001,7 @@ function calculateDeployedAddress(code: c.Cell, data: c.Cell, options: DeployedA
 }
 
 export class JettonMinter implements c.Contract {
-    static CodeCell = c.Cell.fromBase64('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');
+    static CodeCell = c.Cell.fromBase64('te6ccgECJAEACG8AART/APSkE/S88sgLAQIBYgIDBPbQ+JGOI9MfMe1E0AHXLCC8aijM8r/TPzH6ADAB+gACocgB+gLOye1U4NcsI97svvTjAtcsIWO1y5zjAtcsIyFb6DzjAtcsIygPmqSOJu1E0PoA+lD6UDH4kiLHBfLgSQPTPzH6SDDIUAP6AvpU+lTOye1U4NcsJ9xHCMwEBQYHAgEgDQ4B/u1E0IgC0z/6APpI+lAwBPoAIPpQMfpQMfpQ1wsP+JL4KCbIz4Qg+lL6UhP6VMsPyXhRmcjPg8sEz4WgzMz5FoT3sBSAC1AJ1yTIz4oAQM4Xy/fPUBLHBfLgSqLIAfoCE87J7VQgbpFb4MjPhQj6UoIQ1TJ2288Ljss/yYBC+wARAvzTP/pI1woAlSDI+lLJkW3i7UTQbSP6RDCSMzCOxzCIAfoAMfpQMfpQMfpQ1wsP+CglyM+EIPpS+lIS+lTLD8l4USLIz4PLBM+FoMzM+RaE97ATgAtQBNckyM+KAEDOEsv3z1AB4viSyM+FCPpSghDRc1QAzwuOE8s/+lT0AMkRCwH87UTQ+gAg+lD6UDH6UNcLD/iSUAPHBfLgSQTTPzH6SPoA10wi+kQw8tFNINDXLCC8aijM8uBI0z8x+gD6UDH6UDH6APQEAW6RMJHR4viTcPg6IXJx4wT4OSBugRi3IuMEIW6BHRNYA+MEUCOoE6BzgQMscPg8oAJw+DYSoAFwDAP8jiMw7UTQ+gD6UDH6UPiSIscF8uBJbchQBPoCEvpUEvpUzsntVODXLCOhj5EMjiMw7UTQ+gD6UPpQMfiSWMcF8uBJbW3IUAT6AvpUEvpUzsntVODXLCZcMUgU4wLXLCEoRrNUjhftRND6ADH6UDD4kscF8uBJ1NdM+wTtVOCJCAkKAErtRND6APpQ+lDUMfiSI8cF8uBJBNdMyFAE+gIS+lT6VMzOye1UAAjTchWMABDXJzHchA/y8AAIgFD7AAHi+Dagc4EEAoIQCWYBgHD4N6AjufKwFqDIAfoCFM7J7VSCCJiWgHD7Aoj4KCLIz4Qg+lL6Uhb6VBLLD8l4yM+JiAFUcmHIz4PLBM+FoMzM+RaE97AEgAsj1yQyzhLL91j6AoEVDc8LdRPMEszMyYAR+wARAB29mt9qJofQAY/SgY/SgYQCAnEPEAGTrbz2omhEAP0AGP0oGP0oGP0oa4WH/BQSZGfCEH0pfSkJfSplh+S8KJFkZ8HlgmfC0GZmfItCe9gJQAWoAeuSZGfFACBnZfvnqEARASWvFvaiaEQA/QB9KGumELdZgYJAEQEU/wD0pBP0vPLICxICAWITFAICzhUWAB2g9gXaiaH0AfSR9JBh8FUCASAXGAH1QicnHjBPg5IG6BGLci4wQhboEdE1gD4wRRJKgVoHOBAyxw+DygBHD4NhSgA3D4NhOgc4EEAoIQCWYBgHD4N6AClDC88rDhcfg5IG6BGLci4wQhboEdE1gD4wRQI6hzgQMscPg8oAFw+DagAXD4NqBzgQQCghAJZgGAcIIwPDPiRjjTTHzHXLCC8aijMltM/MfoAMI4R1ywj3uy+9JLyP+HTPzH6ADDi7UTQ+gACoMgB+gLOye1U4NcsILxqKMzjAtcsIHxT9SzjAtcsIsr4PeTjAtcsJpuQrGQx3IQP8vCAZGhsAFwgkltw4aiBJxCpBIAL67UTQAdM/+gD6UPpQ+gAG+gAg+kj6SPpQ1wsP+JIjxwWSXwOOP/iS+CoqyM+EIPpSFfpSE/pUyw/JeClUEkLIz4PLBM+FoMzM+RaE97ATgAtQBNckyM+KAEDOEsv3z1DHBfLgSuJRJqDIAfoCzsntVCGTWzRb4w0hbpFb4w4cHQH+0z/6APpI+lD0AfoAIPQEAW6RMJHR4iP6RDDy0U3tRND6ACD6SPpI+lDXCw8hbrOVIMIAwwCRcOIglFOx8AGRcOL4l/iTcPg6VGtB8AL4kibHBfLgSVN8vvKvU8ChUI2hyAH6AhbOye1U+CpUejIkyM+EIBT6UhL6UvpUyw/JeB4A4PiX+DkgboEQnljjBHGBAvJw+DgBcPg2oIEP53D4NqC88rDtRND6ACD6SPpIMPiSIscF8uBJBNM/+gD6UDBTUb7yr1FRocgB+gIUzsntVMjPke92X3rLP1j6AvpS+lTJyM+FiBL6UnHPC27MyYBQ+wAAUsjPkc2LQnImzws/UAX6AhP6VBXOycjPhQgT+lIB+gJxzwtqzMmAEfsAAGj4J28Q+Jeh+C+gc4EEAoIQCWYBgHD4N7YJcvsCyM+FCBL6UoIQ1TJ2288Ljss/yYEAgvsAAfwiCI5QUFhfBcjPkF41FGYayz9QCPoCF/pUFPpUWPoCzsnIz4mIAVR1QsjPg8sEz4WgzMz5FoT3sASACyTXJDMSzhLL94EVDc8LeRLMEszMyYBQ+wDh+Jf4k3D4OixyceME+DkgboEYtyLjBCFugR0TWAPjBFEjqC+gc4EDLHAfAv74PKABcPg2oAFw+Dagc4EEAoIQCWYBgHD4N6Bx+DkgboEYtyLjBCFugR0TWAPjBFAkqHOBAyxw+DygAXD4NqACcPg2EqBzgQQCghAJZgGAcPg3oFIioasAtglmocjPkF41FGZWEc8LPwEREPoCUoD6VB36VFAL+gIZzsnIic8WICEABWIAQAH+VHl6yM+DywTPhaDMzPkWhPewDYALLNckOxrOG8v3UAv6AoEVDc8LdRTMFcwVzMmAEfsAUwDIz4QgEvpSFPpSE/pUFssPyXhtiwTIz5BeNRRmGss/UAj6AhT6VBb6VM+EIBbOycjPiYgBVHVCyM+DywTPhaDMzPkWhPewB4ALJCIAMtckMxLOFcv3AfoCgRUNzwt1zMzMyYAR+wAADvg3oKC88rA=');
 
     static Errors = {
         'Errors.NotEnoughGas': 48,
@@ -1017,6 +1028,8 @@ export class JettonMinter implements c.Contract {
         adminAddress: c.Address | null
         nextAdminAddress: c.Address | null
         metadata: c.Cell
+        platformTreasury: c.Address | null
+        transferFeeBps: uint16
     }, deployedOptions?: DeployedAddrOptions) {
         const initialState = {
             code: deployedOptions?.overrideContractCode ?? JettonMinter.CodeCell,

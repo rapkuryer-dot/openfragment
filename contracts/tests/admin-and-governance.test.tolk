@@ -22,6 +22,8 @@ get fun `test admin: deploy should create minter without bounce`() {
         adminAddress: deployer.address,
         metadata: buildTestMetadata("link"),
         nextAdminAddress: null,
+        platformTreasury: null,
+        transferFeeBps: 0,
     });
 
     val deployResult = minter.sendDeploy(deployer.address, { value: ton("10") });
@@ -312,6 +314,8 @@ get fun `test admin: non-admin should not be able to upgrade minter`() {
         adminAddress: deployer.address,
         nextAdminAddress: null,
         metadata: buildTestMetadata("meta-upgrade"),
+        platformTreasury: null,
+        transferFeeBps: 0,
     }.toCell();
     val newCode = build("JettonMinter");
     val oldContentHash = minter.getContent().hash();
@@ -340,6 +344,8 @@ get fun `test admin: admin should be able to upgrade minter code and data`() {
         adminAddress: deployer.address,
         nextAdminAddress: null,
         metadata: buildTestMetadata(upgradedUri),
+        platformTreasury: null,
+        transferFeeBps: 0,
     }.toCell();
     val newCode = build("JettonMinter");
 

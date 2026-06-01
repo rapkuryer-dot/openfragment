@@ -141,6 +141,7 @@ class StackReader {
 
 type coins = bigint
 
+type uint16 = bigint
 type uint64 = bigint
 
 /**
@@ -622,6 +623,8 @@ export const TopUpTons = {
  >     jettonBalance: coins
  >     ownerAddress: address
  >     minterAddress: address
+ >     platformTreasury: address?
+ >     transferFeeBps: uint16
  > }
  */
 export interface WalletStorage {
@@ -629,6 +632,8 @@ export interface WalletStorage {
     jettonBalance: coins
     ownerAddress: c.Address
     minterAddress: c.Address
+    platformTreasury: c.Address | null
+    transferFeeBps: uint16
 }
 
 export const WalletStorage = {
@@ -636,6 +641,8 @@ export const WalletStorage = {
         jettonBalance: coins
         ownerAddress: c.Address
         minterAddress: c.Address
+        platformTreasury: c.Address | null
+        transferFeeBps: uint16
     }): WalletStorage {
         return {
             $: 'WalletStorage',
@@ -648,12 +655,16 @@ export const WalletStorage = {
             jettonBalance: s.loadCoins(),
             ownerAddress: s.loadAddress(),
             minterAddress: s.loadAddress(),
+            platformTreasury: s.loadMaybeAddress(),
+            transferFeeBps: s.loadUintBig(16),
         }
     },
     store(self: WalletStorage, b: c.Builder): void {
         b.storeCoins(self.jettonBalance);
         b.storeAddress(self.ownerAddress);
         b.storeAddress(self.minterAddress);
+        b.storeAddress(self.platformTreasury);
+        b.storeUint(self.transferFeeBps, 16);
     },
     toCell(self: WalletStorage): c.Cell {
         return makeCellFrom<WalletStorage>(self, WalletStorage.store);
@@ -747,7 +758,7 @@ function calculateDeployedAddress(code: c.Cell, data: c.Cell, options: DeployedA
 }
 
 export class JettonWallet implements c.Contract {
-    static CodeCell = c.Cell.fromBase64('te6ccgECCgEAArgAART/APSkE/S88sgLAQIBYgIDA8TQ+JGONNMfMdcsILxqKMyW0z8x+gAwjhHXLCPe7L70kvI/4dM/MfoAMOLtRND6AAKgyAH6As7J7VTg1ywgvGoozOMC1ywgfFP1LOMC1ywiyvg95OMC1ywmm5CsZDHchA/y8AQFBgAdoPYF2omh9AH0kfSQYfBVAubtRNAB0z/6APpQ+lD6AAb6ACD6SPpIMPiSIccFkTCOOviS+CooyM+EIPpSE/pSyXgpVBJCyM+DywTPhaDMzPkWhPewE4ALUATXJMjPigBAzhLL989QxwXy4EriUSagyAH6As7J7VQhk1s0W+MNIW6RW+MOBwgB/tM/+gD6SPpQ9AH6ACD0BAFukTCR0eIj+kQw8tFN+Jf4k3D4OiNyceME+DkgboEYtyLjBCFugR0TWAPjBFAjqCWgc4EDLHD4PKABcPg2oAFw+Dagc4EEAoIQCWYBgHD4N6C88rDtRND6ACD6SPpIMPiSIscF8uBJUzi+8q9ROKEJAOD4l/g5IG6BEJ5Y4wRxgQLycPg4AXD4NqCBD+dw+DagvPKw7UTQ+gAg+kj6SDD4kiLHBfLgSQTTP/oA+lAwU1G+8q9RUaHIAfoCFM7J7VTIz5Hvdl96yz9Y+gL6UvpUycjPhYgS+lJxzwtuzMmAUPsAAFLIz5HNi0JyJs8LP1AF+gIT+lQVzsnIz4UIE/pSAfoCcc8LaszJgBH7AABo+CdvEPiXofgvoHOBBAKCEAlmAYBw+De2CXL7AsjPhQgS+lKCENUydtvPC47LP8mBAIL7AADAyAH6AhLOye1U+ComyM+EIPpSE/pSyXjIz5BeNRRmGss/UAj6AvpUFPpUWPoCzsnIz4mIAVR0JcjPg8sEz4WgzMz5FoT3sASACyfXJDYVzhLL94EVDc8LeczMzMmAUPsA');
+    static CodeCell = c.Cell.fromBase64('te6ccgECEwEABKUAART/APSkE/S88sgLAQIBYgIDAgLOBAUAHaD2BdqJofQB9JH0kGHwVQIBIAYHAfVCJyceME+DkgboEYtyLjBCFugR0TWAPjBFEkqBWgc4EDLHD4PKAEcPg2FKADcPg2E6BzgQQCghAJZgGAcPg3oAKUMLzysOFx+DkgboEYtyLjBCFugR0TWAPjBFAjqHOBAyxw+DygAXD4NqABcPg2oHOBBAKCEAlmAYBwgSA8M+JGONNMfMdcsILxqKMyW0z8x+gAwjhHXLCPe7L70kvI/4dM/MfoAMOLtRND6AAKgyAH6As7J7VTg1ywgvGoozOMC1ywgfFP1LOMC1ywiyvg95OMC1ywmm5CsZDHchA/y8IAgJCgAXCCSW3DhqIEnEKkEgAvrtRNAB0z/6APpQ+lD6AAb6ACD6SPpI+lDXCw/4kiPHBZJfA44/+JL4KirIz4Qg+lIV+lIT+lTLD8l4KVQSQsjPg8sEz4WgzMz5FoT3sBOAC1AE1yTIz4oAQM4Sy/fPUMcF8uBK4lEmoMgB+gLOye1UIZNbNFvjDSFukVvjDgsMAf7TP/oA+kj6UPQB+gAg9AQBbpEwkdHiI/pEMPLRTe1E0PoAIPpI+kj6UNcLDyFus5UgwgDDAJFw4iCUU7HwAZFw4viX+JNw+DpUa0HwAviSJscF8uBJU3y+8q9TwKFQjaHIAfoCFs7J7VT4KlR6MiTIz4QgFPpSEvpS+lTLD8l4DQDg+Jf4OSBugRCeWOMEcYEC8nD4OAFw+DaggQ/ncPg2oLzysO1E0PoAIPpI+kgw+JIixwXy4EkE0z/6APpQMFNRvvKvUVGhyAH6AhTOye1UyM+R73Zfess/WPoC+lL6VMnIz4WIEvpScc8LbszJgFD7AABSyM+RzYtCcibPCz9QBfoCE/pUFc7JyM+FCBP6UgH6AnHPC2rMyYAR+wAAaPgnbxD4l6H4L6BzgQQCghAJZgGAcPg3tgly+wLIz4UIEvpSghDVMnbbzwuOyz/JgQCC+wAB/CIIjlBQWF8FyM+QXjUUZhrLP1AI+gIX+lQU+lRY+gLOycjPiYgBVHVCyM+DywTPhaDMzPkWhPewBIALJNckMxLOEsv3gRUNzwt5EswSzMzJgFD7AOH4l/iTcPg6LHJx4wT4OSBugRi3IuMEIW6BHRNYA+MEUSOoL6BzgQMscA4C/vg8oAFw+DagAXD4NqBzgQQCghAJZgGAcPg3oHH4OSBugRi3IuMEIW6BHRNYA+MEUCSoc4EDLHD4PKABcPg2oAJw+DYSoHOBBAKCEAlmAYBw+DegUiKhqwC2CWahyM+QXjUUZlYRzws/AREQ+gJSgPpUHfpUUAv6AhnOyciJzxYPEAAFYgBAAf5UeXrIz4PLBM+FoMzM+RaE97ANgAss1yQ7Gs4by/dQC/oCgRUNzwt1FMwVzBXMyYAR+wBTAMjPhCAS+lIU+lIT+lQWyw/JeG2LBMjPkF41FGYayz9QCPoCFPpUFvpUz4QgFs7JyM+JiAFUdULIz4PLBM+FoMzM+RaE97AHgAskEQAy1yQzEs4Vy/cB+gKBFQ3PC3XMzMzJgBH7AAAO+DegoLzysA==');
 
     static Errors = {
         'Errors.BalanceError': 47,
@@ -773,6 +784,8 @@ export class JettonWallet implements c.Contract {
         jettonBalance: coins
         ownerAddress: c.Address
         minterAddress: c.Address
+        platformTreasury: c.Address | null
+        transferFeeBps: uint16
     }, deployedOptions?: DeployedAddrOptions) {
         const initialState = {
             code: deployedOptions?.overrideContractCode ?? JettonWallet.CodeCell,

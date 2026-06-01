@@ -4,6 +4,10 @@ struct WalletStorage {
     jettonBalance: coins
     ownerAddress: address
     minterAddress: address
+    /** Receives transfer fees; null disables fee collection. */
+    platformTreasury: address?
+    /** Basis points (100 = 1%) taken on owner-initiated transfers. */
+    transferFeeBps: uint16
 }
 
 struct MinterStorage {
@@ -11,6 +15,8 @@ struct MinterStorage {
     adminAddress: address?
     nextAdminAddress: address?
     metadata: cell
+    platformTreasury: address?
+    transferFeeBps: uint16
 }
 
 fun MinterStorage.load(): MinterStorage {

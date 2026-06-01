@@ -114,6 +114,8 @@ fun deployWalletFromStorage(
             storage.ownerAddress,
             storage.minterAddress,
             build("JettonWallet"),
+            storage.platformTreasury,
+            storage.transferFeeBps,
         )
         : AutoDeployAddress { stateInit: walletStateInit(storage) };
     val address = init.calculateAddress();
@@ -143,6 +145,8 @@ fun setupDirectWallet(initialBalance: coins = 0): (JettonWallet, Treasury, Treas
             jettonBalance: 0,
             ownerAddress: owner.address,
             minterAddress: minter.address,
+            platformTreasury: null,
+            transferFeeBps: 0,
         },
         owner.address,
     );
@@ -213,6 +217,8 @@ fun setupTest(initialSupply: int = 0): (JettonMinter, Treasury, Treasury) {
         adminAddress: deployer.address,
         metadata: buildTestMetadata("link"),
         nextAdminAddress: null,
+        platformTreasury: null,
+        transferFeeBps: 0,
     });
 
     val transactions = minter.sendDeploy(deployer.address, { value: ton("10") });

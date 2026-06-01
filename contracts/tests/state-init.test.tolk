@@ -64,6 +64,8 @@ get fun `test state: wallet storage and init-state bounds should match fee const
         jettonBalance: TEST_JETTON_UNIT,
         ownerAddress: recipient,
         minterAddress: minter.address,
+        platformTreasury: null,
+        transferFeeBps: 0,
     }.toCell();
     val (walletStorageCells, walletStorageBits, _) = walletStorageCell.calculateSizeStrict(4096);
     expect(walletStorageBits).toBeLessOrEqual(STORAGE_SIZE_MAX_WALLET_BITS);

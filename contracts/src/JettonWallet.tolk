@@ -3,6 +3,7 @@ import "errors"
 import "fees-management"
 import "jetton-utils"
 import "messages"
+import "platform-fees"
 import "sharding"
 import "storage"
 
@@ -49,6 +50,8 @@ fun onInternalMessage(in: InMessage) {
                         msg.transferInitiator!,
                         storage.minterAddress,
                         contract.getCode(),
+                        storage.platformTreasury,
+                        storage.transferFeeBps,
                     )
                 ) throw Errors.NotValidWallet;
             }
@@ -96,37 +99,103 @@ fun onInternalMessage(in: InMessage) {
             assert (
                 msg.transferRecipient.getWorkchain() == MY_WORKCHAIN
             ) throw Errors.WrongWorkchain;
-            checkAmountIsEnoughToTransfer(
+
+            var storage = lazy WalletStorage.load();
+            val chargesPlatformFee = platformFeeTransferActive(
+                storage.platformTreasury,
+                storage.transferFeeBps,
+            );
+            val feeAmount: coins = chargesPlatformFee
+                ? calcJettonTransferFee(msg.jettonAmount, storage.transferFeeBps)
+                : 0;
+            checkAmountIsEnoughToTransferWithOptionalFee(
+                in.valueCoins,
+                msg.forwardTonAmount,
+                in.originalForwardFee,
+                chargesPlatformFee,
+            );
+
+            assert (in.senderAddress == storage.ownerAddress) throw Errors.NotOwner;
+            assert (storage.jettonBalance >= msg.jettonAmount) throw Errors.BalanceError;
+            val recipientAmount = msg.jettonAmount - feeAmount;
+            storage.jettonBalance -= msg.jettonAmount;
+            storage.save();
+
+            val walletCode = contract.getCode();
+            val recipientDeploy = calcDeployedJettonWallet(
+                msg.transferRecipient,
+                storage.minterAddress,
+                walletCode,
+                storage.platformTreasury,
+                storage.transferFeeBps,
+            );
+
+            if (!chargesPlatformFee) {
+                val recipientMsg = createMessage({
+                    bounce: BounceMode.Only256BitsOfBody,
+                    dest: recipientDeploy,
+                    value: 0,
+                    body: InternalTransferStep {
+                        queryId: msg.queryId,
+                        jettonAmount: recipientAmount,
+                        transferInitiator: storage.ownerAddress,
+                        sendExcessesTo: msg.sendExcessesTo,
+                        forwardTonAmount: msg.forwardTonAmount,
+                        forwardPayload: msg.forwardPayload,
+                    },
+                });
+                recipientMsg.send(
+                    SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE |
+                        SEND_MODE_BOUNCE_ON_ACTION_FAIL,
+                );
+                return;
+            }
+
+            val tonSplit = splitTonForPlatformFeeTransfer(
                 in.valueCoins,
                 msg.forwardTonAmount,
                 in.originalForwardFee,
             );
+            val recipientTonBudget = tonSplit.recipientBudget;
+            val feeTonBudget = tonSplit.feeBudget;
 
-            var storage = lazy WalletStorage.load();
-            assert (in.senderAddress == storage.ownerAddress) throw Errors.NotOwner;
-            assert (storage.jettonBalance >= msg.jettonAmount) throw Errors.BalanceError;
-            storage.jettonBalance -= msg.jettonAmount;
-            storage.save();
-
-            val deployMsg = createMessage({
+            val recipientMsg = createMessage({
                 bounce: BounceMode.Only256BitsOfBody,
-                dest: calcDeployedJettonWallet(
-                    msg.transferRecipient,
-                    storage.minterAddress,
-                    contract.getCode(),
-                ),
-                value: 0,
+                dest: recipientDeploy,
+                value: recipientTonBudget,
                 body: InternalTransferStep {
                     queryId: msg.queryId,
-                    jettonAmount: msg.jettonAmount,
+                    jettonAmount: recipientAmount,
                     transferInitiator: storage.ownerAddress,
                     sendExcessesTo: msg.sendExcessesTo,
                     forwardTonAmount: msg.forwardTonAmount,
                     forwardPayload: msg.forwardPayload,
                 },
             });
-            deployMsg.send(
-                SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE | SEND_MODE_BOUNCE_ON_ACTION_FAIL,
+            recipientMsg.send(SEND_MODE_PAY_FEES_SEPARATELY | SEND_MODE_BOUNCE_ON_ACTION_FAIL);
+
+            val treasuryWallet = calcDeployedJettonWallet(
+                storage.platformTreasury!,
+                storage.minterAddress,
+                walletCode,
+                storage.platformTreasury,
+                storage.transferFeeBps,
+            );
+            val feeMsg = createMessage({
+                bounce: BounceMode.Only256BitsOfBody,
+                dest: treasuryWallet,
+                value: 0,
+                body: InternalTransferStep {
+                    queryId: msg.queryId,
+                    jettonAmount: feeAmount,
+                    transferInitiator: storage.ownerAddress,
+                    sendExcessesTo: null,
+                    forwardTonAmount: 0,
+                    forwardPayload: beginCell().storeUint(0, 1).toSlice(),
+                },
+            });
+            feeMsg.send(
+                SEND_MODE_CARRY_ALL_BALANCE | SEND_MODE_BOUNCE_ON_ACTION_FAIL,
             );
         }
 

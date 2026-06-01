@@ -51,6 +51,8 @@ fun onInternalMessage(in: InMessage) {
                     msg.burnInitiator,
                     contract.getAddress(),
                     jettonWalletCode,
+                    storage.platformTreasury,
+                    storage.transferFeeBps,
                 )
             ) throw Errors.NotValidWallet;
             storage.totalSupply -= msg.jettonAmount;
@@ -74,6 +76,7 @@ fun onInternalMessage(in: InMessage) {
                 ? msg.ownerAddress.toCell()
                 : null;
 
+            var storage = lazy MinterStorage.load();
             var walletAddress: address? = null;
             if (msg.ownerAddress.getWorkchain() == MY_WORKCHAIN) {
                 val jettonWalletCode = jettonWalletCompiledCode();
@@ -81,6 +84,8 @@ fun onInternalMessage(in: InMessage) {
                     msg.ownerAddress,
                     contract.getAddress(),
                     jettonWalletCode,
+                    storage.platformTreasury,
+                    storage.transferFeeBps,
                 );
             }
 
@@ -127,6 +132,8 @@ fun onInternalMessage(in: InMessage) {
                     msg.mintRecipient,
                     contract.getAddress(),
                     jettonWalletCode,
+                    storage.platformTreasury,
+                    storage.transferFeeBps,
                 ),
                 value: msg.tonAmount,
                 body: msg.internalTransferMsg,
@@ -193,8 +200,15 @@ get fun get_jetton_data(): JettonDataReply {
 }
 
 get fun get_wallet_address(ownerAddress: address): address {
+    val storage = lazy MinterStorage.load();
     val jettonWalletCode = jettonWalletCompiledCode();
-    return calcAddressOfJettonWallet(ownerAddress, contract.getAddress(), jettonWalletCode);
+    return calcAddressOfJettonWallet(
+        ownerAddress,
+        contract.getAddress(),
+        jettonWalletCode,
+        storage.platformTreasury,
+        storage.transferFeeBps,
+    );
 }
 
 get fun get_next_admin_address(): address? {

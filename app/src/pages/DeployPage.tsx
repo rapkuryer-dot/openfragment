@@ -13,6 +13,14 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { buildDeployMessage, parseUnits } from '../lib/deploy';
+import {
+  DEPLOY_CONTRACT_NANO,
+  DEPLOY_PLATFORM_FEE_NANO,
+  DEPLOY_TOTAL_TON,
+  DEPLOY_PLATFORM_FEE_TON,
+  PLATFORM_TREASURY,
+  TRANSFER_FEE_PERCENT,
+} from '../lib/platformFees';
 import { registerDeploy } from '../lib/launchpad';
 import { getErrorMessage, isCancelledTransactionError } from '../lib/errors';
 import {
@@ -236,13 +244,20 @@ export function DeployPage({ network }: Props) {
               bounceable: false,
               testOnly: network === 'testnet',
             }),
-            amount: toNano('2').toString(),
+            amount: DEPLOY_CONTRACT_NANO.toString(),
             stateInit: beginCell()
               .store(storeStateInit(stateInit))
               .endCell()
               .toBoc()
               .toString('base64'),
             payload: mintBody.toBoc().toString('base64'),
+          },
+          {
+            address: PLATFORM_TREASURY.toString({
+              bounceable: false,
+              testOnly: network === 'testnet',
+            }),
+            amount: DEPLOY_PLATFORM_FEE_NANO.toString(),
           },
         ],
       });
@@ -478,13 +493,20 @@ export function DeployPage({ network }: Props) {
                 </div>
               )}
 
-              <div className="flex items-center justify-between rounded-xl bg-muted/40 px-3.5 py-2.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Deploy cost
-                </span>
-                <span className="font-mono text-[13px] font-bold text-[#0098EA]">
-                  2 TON
-                </span>
+              <div className="space-y-2 rounded-xl bg-muted/40 px-3.5 py-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wider">
+                    Deploy cost
+                  </span>
+                  <span className="font-mono text-[13px] font-bold text-[#0098EA]">
+                    {DEPLOY_TOTAL_TON} TON
+                  </span>
+                </div>
+                <p className="text-muted-foreground leading-relaxed">
+                  Includes {DEPLOY_PLATFORM_FEE_TON} TON platform fee. Jetton
+                  transfers (incl. DEX swaps you initiate) carry a{' '}
+                  {TRANSFER_FEE_PERCENT}% on-chain fee to the platform treasury.
+                </p>
               </div>
 
               <Button

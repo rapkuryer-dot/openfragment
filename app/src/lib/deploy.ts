@@ -15,6 +15,7 @@ import {
   buildOnchainMetadata,
   type JettonMetadata,
 } from './jettonContent';
+import { PLATFORM_TREASURY, TRANSFER_FEE_BPS } from './platformFees';
 
 export function parseUnits(amount: string, decimals: number): bigint {
   const [whole = '', fracRaw = ''] = amount.split('.');
@@ -43,6 +44,8 @@ export async function buildDeployMessage(params: {
     adminAddress: params.ownerAddress,
     nextAdminAddress: null,
     metadata: content,
+    platformTreasury: PLATFORM_TREASURY,
+    transferFeeBps: TRANSFER_FEE_BPS,
   });
 
   const mintBody = buildMintBody({

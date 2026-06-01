@@ -100,6 +100,8 @@ fun promptJettonMinterStorage(admin: address): MinterStorage {
         adminAddress: admin,
         nextAdminAddress: null,
         metadata: buildJettonMetadataCell(promptJettonMetadata(JETTON_DEFAULT_DESCRIPTION)),
+        platformTreasury: null,
+        transferFeeBps: 0,
     };
 }
 
