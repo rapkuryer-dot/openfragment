@@ -91,20 +91,56 @@ function saveLocalDeploys(list: RegisteredToken[]) {
   }
 }
 
-/** Record a freshly deployed token: shared registry (best-effort) + local. */
+async function postToRegistry(token: RegisteredToken): Promise<boolean> {
+  try {
+    const res = await fetch(`${originBase()}/api/launchpad`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(token),
+    });
+    if (!res.ok) return false;
+    const json = (await res.json()) as { persisted?: boolean };
+    return json.persisted === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Push this browser's deploys to the public registry (e.g. after KV was offline). */
+export async function syncLocalDeploysToRegistry(
+  network: Network,
+): Promise<void> {
+  const local = getLocalDeploys().filter((t) => t.network === network);
+  if (local.length === 0) return;
+
+  const registry = await fetchRegistry(network);
+  const inRegistry = new Set(
+    registry
+      .map((t) => rawAddress(t.address))
+      .filter((r): r is string => r != null),
+  );
+
+  const missing = local.filter((t) => {
+    const raw = rawAddress(t.address);
+    return raw != null && !inRegistry.has(raw);
+  });
+
+  await Promise.allSettled(missing.map((t) => postToRegistry(t)));
+}
+
+/** Record a freshly deployed token: public registry + local backup. */
 export async function registerDeploy(token: RegisteredToken): Promise<void> {
   const local = getLocalDeploys();
   if (!local.some((t) => t.address === token.address)) {
     saveLocalDeploys([...local, token]);
   }
-  try {
-    await fetch(`${originBase()}/api/launchpad`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(token),
-    });
-  } catch {
-    /* registry offline — local copy still shows it for this visitor */
+  let ok = await postToRegistry(token);
+  if (!ok) {
+    await new Promise((r) => setTimeout(r, 400));
+    ok = await postToRegistry(token);
+  }
+  if (!ok && import.meta.env.DEV) {
+    console.warn('[launchpad] Could not persist token to public registry');
   }
 }
 
@@ -177,6 +213,8 @@ async function fetchTonUsd(): Promise<number | undefined> {
 export async function fetchLaunchpad(
   network: Network,
 ): Promise<LaunchpadToken[]> {
+  await syncLocalDeploysToRegistry(network);
+
   const [registry, local, tonUsd] = await Promise.all([
     fetchRegistry(network),
     Promise.resolve(getLocalDeploys().filter((t) => t.network === network)),
