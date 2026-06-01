@@ -1043,9 +1043,10 @@ function SectionHeader({
 
 function Footer() {
   return (
-    <footer className="relative px-6 py-10 border-t border-white/10 bg-transparent text-white">
+    <footer className="relative px-6 py-10 pb-12 border-t border-white/10 bg-transparent text-white">
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-white/50">
-        <div className="flex items-center gap-2.5 text-white">
+        {/* Left inset — room for fixed TON/USD pill (bottom-left) */}
+        <div className="flex items-center gap-2.5 text-white w-full md:w-auto pl-[7.75rem] sm:pl-[8.25rem] md:pl-[8.5rem] max-sm:justify-center max-sm:pl-0 max-sm:pt-10">
           <OFLogo size={26} />
           <span className="font-display font-bold tracking-[0.12em]">
             OPEN<span className="text-[#3DA8FF]">FRAGMENT</span>
