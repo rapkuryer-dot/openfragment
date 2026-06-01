@@ -33,14 +33,20 @@ export function LandingPage({ onLaunch }: Props) {
   return (
     <div className="of-landing relative min-h-screen text-[#0A0A0B] font-sans antialiased bg-white">
       <Nav onLaunch={onLaunch} />
-      <div className="h-16 shrink-0" aria-hidden />
-      <div className="overflow-x-hidden">
+      {/* Light content layer — opaque white so it fully covers the dark panel
+         below it until the user scrolls to the very bottom. */}
+      <div className="of-reveal-content relative z-10 bg-white">
+        <div className="h-16 shrink-0" aria-hidden />
         <Hero onLaunch={onLaunch} />
         <Marquee />
         <Stats />
         <Features />
         <HowItWorks />
         <Security />
+      </div>
+      {/* Dark panel pinned to the viewport bottom (sticky). As the content
+         layer scrolls up, this panel is revealed rising from the bottom. */}
+      <div className="of-reveal-panel">
         <CTA onLaunch={onLaunch} />
         <Footer />
       </div>
@@ -287,15 +293,15 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
             OPEN<span className="text-[#0098EA]">FRAGMENT</span>
           </div>
         </div>
-        <nav className="hidden md:flex items-center gap-1 bg-[#F4F4F5] rounded-full p-1">
+        <nav className="hidden md:flex items-center gap-1 bg-white/70 ring-1 ring-black/[0.05] shadow-[0_4px_16px_-8px_rgba(20,30,80,0.18)] backdrop-blur rounded-full p-1">
           <NavLink href="#features">Features</NavLink>
           <NavLink href="#how">How it works</NavLink>
           <NavLink href="#security">Security</NavLink>
           <a
             href="/launchpad"
-            className="of-navlink relative inline-flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold text-[#0098EA] rounded-full transition-colors duration-200 hover:text-[#005EFF]"
+            className="of-navlink relative inline-flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold rounded-full transition-colors duration-200"
           >
-            <Rocket className="size-3.5" />
+            <Rocket className="relative z-10 size-3.5" />
             <span className="relative z-10">Launchpad</span>
           </a>
         </nav>
@@ -335,7 +341,7 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <a
       href={href}
-      className="of-navlink relative px-4 py-1.5 text-[13px] font-semibold text-black/70 rounded-full transition-colors duration-200 hover:text-[#0098EA]"
+      className="of-navlink relative px-4 py-1.5 text-[13px] font-semibold rounded-full transition-colors duration-200"
     >
       <span className="relative z-10">{children}</span>
     </a>
@@ -572,7 +578,7 @@ function Stats() {
   }[] = [
     { v: '<2s', l: 'Deploy time' },
     { v: '100%', l: 'Snipe-resistance' },
-    { v: '1 TON', l: 'Avg. fee' },
+    { v: '2 TON', l: 'Avg. fee' },
     {
       v: 'Tolk Language',
       l: 'Built on',
@@ -928,7 +934,7 @@ function SecurityVisual() {
 
 function CTA({ onLaunch }: { onLaunch: () => void }) {
   return (
-    <section className="of-fullbleed relative overflow-hidden bg-[#05070D] text-white">
+    <section className="of-fullbleed relative flex flex-1 items-center justify-center overflow-hidden bg-[#05070D] text-white">
       <div
         className="absolute inset-0"
         aria-hidden
@@ -950,9 +956,9 @@ function CTA({ onLaunch }: { onLaunch: () => void }) {
             'radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent)',
         }}
       />
-      <div className="relative px-6 py-32 md:py-40 text-center max-w-[1100px] mx-auto">
+      <div className="relative px-6 py-16 md:py-20 text-center max-w-[1100px] mx-auto">
         <Reveal y={30}>
-          <h2 className="font-display text-[clamp(36px,6vw,72px)] font-bold leading-[1.02] tracking-[-0.03em]">
+          <h2 className="font-display text-[clamp(34px,5vw,62px)] font-bold leading-[1.04] tracking-[-0.03em]">
             Launch your token.
             <br />
             <span className="bg-gradient-to-r from-[#7ED4FF] via-[#A8C7FF] to-[#7ED4FF] bg-clip-text text-transparent">
@@ -961,12 +967,12 @@ function CTA({ onLaunch }: { onLaunch: () => void }) {
           </h2>
         </Reveal>
         <Reveal delay={200}>
-          <p className="mt-6 text-[16.5px] text-white/60 max-w-[560px] mx-auto">
+          <p className="mt-5 text-[16.5px] text-white/60 max-w-[560px] mx-auto">
             Free to try on testnet. Pay only TON gas to deploy on mainnet.
           </p>
         </Reveal>
         <Reveal delay={350}>
-          <div className="mt-12">
+          <div className="mt-9">
             <MagneticButton
               onClick={onLaunch}
               className="bg-white text-[#05070D] font-bold rounded-full h-[64px] px-10 text-[17px] shadow-[0_20px_60px_-12px_rgba(0,150,234,0.5)] hover:bg-[#0098EA] hover:text-white"
@@ -1025,30 +1031,33 @@ function SectionHeader({
 
 function Footer() {
   return (
-    <footer className="relative px-6 py-10 border-t border-black/[0.06] bg-white">
-      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-black/50">
-        <div className="flex items-center gap-2.5">
+    <footer className="relative px-6 py-10 border-t border-white/10 bg-transparent text-white">
+      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-white/50">
+        <div className="flex items-center gap-2.5 text-white">
           <OFLogo size={26} />
-          <span className="font-display font-bold tracking-[0.12em] text-black">
-            OPEN<span className="text-[#0098EA]">FRAGMENT</span>
+          <span className="font-display font-bold tracking-[0.12em]">
+            OPEN<span className="text-[#3DA8FF]">FRAGMENT</span>
           </span>
-          <span className="ml-2">© {new Date().getFullYear()}</span>
+          <span className="ml-2 text-white/40">© {new Date().getFullYear()}</span>
         </div>
         <div className="flex items-center gap-5">
-          <a href="#features" className="hover:text-black transition-colors">
+          <a href="/launchpad" className="hover:text-white transition-colors">
+            Launchpad
+          </a>
+          <a href="#features" className="hover:text-white transition-colors">
             Features
           </a>
-          <a href="#how" className="hover:text-black transition-colors">
+          <a href="#how" className="hover:text-white transition-colors">
             How it works
           </a>
-          <a href="#security" className="hover:text-black transition-colors">
+          <a href="#security" className="hover:text-white transition-colors">
             Security
           </a>
           <a
             href={X_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 hover:text-black transition-colors"
+            className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
             title="@openfragment on X"
           >
             <XIcon className="size-3" />X / Twitter
@@ -1057,17 +1066,17 @@ function Footer() {
             href={TELEGRAM_COMMUNITY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 hover:text-[#0088cc] transition-colors"
+            className="inline-flex items-center gap-1.5 hover:text-[#3DA8FF] transition-colors"
             title="OPENFRAGMENT on Telegram"
           >
-            <TelegramIcon className="size-3.5 shrink-0 text-[#229ED9]" />
+            <TelegramIcon className="size-3.5 shrink-0 text-[#3DA8FF]" />
             Telegram
           </a>
           <a
             href="https://ton.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-black transition-colors"
+            className="hover:text-white transition-colors"
           >
             TON
           </a>

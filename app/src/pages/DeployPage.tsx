@@ -236,7 +236,7 @@ export function DeployPage({ network }: Props) {
               bounceable: false,
               testOnly: network === 'testnet',
             }),
-            amount: toNano('1').toString(),
+            amount: toNano('2').toString(),
             stateInit: beginCell()
               .store(storeStateInit(stateInit))
               .endCell()
@@ -477,6 +477,15 @@ export function DeployPage({ network }: Props) {
                   </p>
                 </div>
               )}
+
+              <div className="flex items-center justify-between rounded-xl bg-muted/40 px-3.5 py-2.5">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Deploy cost
+                </span>
+                <span className="font-mono text-[13px] font-bold text-[#0098EA]">
+                  2 TON
+                </span>
+              </div>
 
               <Button
                 className="w-full h-12 rounded-full text-[15px] font-bold"

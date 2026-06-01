@@ -389,43 +389,45 @@ html {
   z-index: -1;
 }
 
-/* Nav link hover — animated pill background that slides in */
+/* Nav link hover — vivid gradient pill that slides up and fills.
+   Unique indigo→cyan identity, distinct from the plain TON-blue accents. */
 .of-navlink {
   position: relative;
   overflow: hidden;
+  color: #3b3f5c;
 }
 .of-navlink::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 152, 234, 0.12) 0%,
-    rgba(0, 94, 255, 0.08) 100%
-  );
+  background: linear-gradient(135deg, #6e7bff 0%, #2bc0ff 100%);
   transform: translateY(110%);
-  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-}
-.of-navlink::after {
-  content: '';
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 4px;
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent, #0098ea, transparent);
-  transform: scaleX(0);
-  transform-origin: left;
   transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
+  box-shadow: 0 8px 20px -8px rgba(64, 110, 255, 0.5);
+}
+.of-navlink > span {
+  transition: color 220ms ease;
+}
+.of-navlink:hover {
+  color: #fff;
 }
 .of-navlink:hover::before {
   transform: translateY(0);
 }
-.of-navlink:hover::after {
-  transform: scaleX(1);
+
+/* Bottom reveal: dark panel pinned to the viewport bottom while the opaque
+   light content (z-10) scrolls up over it — the panel appears to rise from the
+   bottom of the screen, smoothly, tied 1:1 to scroll (no JS, no jank). */
+.of-reveal-panel {
+  position: sticky;
+  bottom: 0;
+  z-index: 0;
+  background: #05070d;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Full-bleed section: spans the full width of its (already full-width) parent.
