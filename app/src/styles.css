@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+/* Prevent flash of unstyled / blank content before React paints */
+html,
+body,
+#root {
+  min-height: 100%;
+  background-color: #fff;
+}
+
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 @theme inline {

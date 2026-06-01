@@ -1,23 +1,57 @@
 import './polyfills';
 
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+
+import App from './App';
+import { AppProviders } from './providers/AppProviders';
+import { RootErrorBoundary } from './components/RootErrorBoundary';
+import {
+  clearBootReloadFlag,
+  isChunkLoadError,
+  setupBootRecovery,
+  showBootError,
+  tryReloadOnceForChunkError,
+} from './bootRecovery';
 
 import './styles.css';
 
-async function bootstrap() {
-  const [{ default: App }, { AppProviders }] = await Promise.all([
-    import('./App'),
-    import('./providers/AppProviders'),
-  ]);
+setupBootRecovery();
 
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
+function BootedApp() {
+  useEffect(() => {
+    clearBootReloadFlag();
+  }, []);
+
+  return (
+    <RootErrorBoundary>
       <AppProviders>
         <App />
       </AppProviders>
+    </RootErrorBoundary>
+  );
+}
+
+function mount() {
+  const el = document.getElementById('root');
+  if (!el) {
+    throw new Error('Root element #root not found');
+  }
+
+  createRoot(el).render(
+    <StrictMode>
+      <BootedApp />
     </StrictMode>,
   );
 }
 
-void bootstrap();
+try {
+  mount();
+} catch (err) {
+  if (isChunkLoadError(err) && tryReloadOnceForChunkError()) {
+    /* reloading */
+  } else {
+    showBootError(err);
+    console.error('[OPENFRAGMENT] Bootstrap failed', err);
+  }
+}
