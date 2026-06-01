@@ -67,7 +67,7 @@ export function TonPriceTicker() {
   return (
     <div
       data-ton-ticker-probe
-      className="fixed bottom-4 left-4 z-40 max-sm:bottom-3 max-sm:left-3 max-sm:right-auto pointer-events-none"
+      className="fixed bottom-3 left-3 z-40 max-sm:bottom-2.5 max-sm:left-2.5 pointer-events-none"
       aria-live="polite"
       aria-label="TON to US dollar price"
     >
@@ -76,29 +76,29 @@ export function TonPriceTicker() {
         target="_blank"
         rel="noopener noreferrer"
         title="Price source: CoinGecko · open Toncoin"
-        className={`group pointer-events-auto inline-flex items-center rounded-full border px-3.5 py-2 shadow-sm backdrop-blur-md font-display text-[13px] font-semibold tabular-nums transition-all duration-300 ${
+        className={`group pointer-events-auto inline-flex items-center rounded-full border px-2 py-1 shadow-sm backdrop-blur-md font-display text-[10.5px] font-semibold tabular-nums leading-none transition-all duration-300 ${
           dark
             ? 'border-white/20 bg-[#0A0A0B]/85 text-white hover:border-[#3DA8FF]/50 hover:bg-[#0A0A0B]/95'
             : 'border-black/[0.08] bg-white/90 text-[#0A0A0B] hover:border-[#0098EA]/40 hover:bg-white'
         }`}
       >
         <span className={dark ? 'text-[#3DA8FF]' : 'text-[#0098EA]'}>TON</span>
-        <span className={dark ? 'mx-1.5 text-white/35' : 'mx-1.5 text-black/25'}>
+        <span className={dark ? 'mx-1 text-white/35' : 'mx-1 text-black/25'}>
           /
         </span>
         <span>USD</span>
-        <span className={dark ? 'ml-2 text-white/90' : 'ml-2 text-black/80'}>
+        <span className={dark ? 'ml-1.5 text-white/90' : 'ml-1.5 text-black/80'}>
           {formatted}
         </span>
         <ExternalLink
-          className={`ml-1.5 size-3 transition-colors ${
+          className={`ml-1 size-2.5 transition-colors ${
             dark
               ? 'text-white/40 group-hover:text-[#3DA8FF]'
               : 'text-black/30 group-hover:text-[#0098EA]'
           }`}
         />
         <span
-          className={`ml-1.5 hidden whitespace-nowrap text-[11px] font-medium group-hover:inline ${
+          className={`ml-1 hidden whitespace-nowrap text-[9px] font-medium group-hover:inline ${
             dark ? 'text-white/45' : 'text-black/40'
           }`}
         >

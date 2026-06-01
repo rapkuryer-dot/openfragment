@@ -18,11 +18,17 @@ import {
   TRANSFER_FEE_PERCENT,
 } from '../lib/platformFees';
 import { GRADUATION_TON, GRADUATION_NEAR } from '../lib/launchpad';
-import { TELEGRAM_COMMUNITY_URL } from '../lib/siteLinks';
+import {
+  GITHUB_REPO_URL,
+  SUPPORT_EMAIL,
+  SUPPORT_EMAIL_MAILTO,
+  TELEGRAM_COMMUNITY_URL,
+} from '../lib/siteLinks';
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview' },
   { id: 'difference', label: 'Why us' },
+  { id: 'wallets', label: 'Wallets' },
   { id: 'deploy', label: 'Deploy' },
   { id: 'fees', label: 'Fees' },
   { id: 'launchpad', label: 'Launchpad' },
@@ -30,6 +36,7 @@ const SECTIONS = [
   { id: 'contracts', label: 'Contracts' },
   { id: 'security', label: 'Security' },
   { id: 'faq', label: 'FAQ' },
+  { id: 'support', label: 'Support' },
 ] as const;
 
 export function DocsPage() {
@@ -120,9 +127,16 @@ export function DocsPage() {
           <DocSection id="overview" title="Overview">
             <p>
               <strong>OpenFragment</strong> is a mainnet-ready launchpad for
-              jettons (TON fungible tokens). You connect Tonkeeper via TON
-              Connect, fill in name, symbol, logo and socials, and deploy a
+              jettons (TON fungible tokens). You connect any{' '}
+              <strong>TON Connect 2</strong> wallet (mobile, browser extension,
+              or Telegram), fill in name, symbol, logo and socials, and deploy a
               standard minter + wallet in one signed transaction.
+            </p>
+            <p className="mt-3 text-muted-foreground">
+              The site is a static dApp: we never hold your keys. Signing happens
+              only inside the wallet you choose. After deploy your token is
+              listed on the public launchpad and can be traded on STON.fi, DeDust,
+              and Tonviewer like any other TEP-74 jetton.
             </p>
             <ul className="mt-4 space-y-2 list-disc pl-5 text-muted-foreground">
               <li>
@@ -197,10 +211,52 @@ export function DocsPage() {
             </p>
           </DocSection>
 
+          <DocSection id="wallets" title="Supported wallets">
+            <p>
+              OpenFragment uses the open <strong>TON Connect 2</strong> standard.
+              When you click <strong>Connect Wallet</strong>, the app shows every
+              wallet your browser or Telegram session supports — you are not
+              limited to a single provider.
+            </p>
+            <ul className="mt-4 space-y-2 list-disc pl-5 text-muted-foreground">
+              <li>
+                <strong className="text-foreground">Tonkeeper</strong> — mobile
+                and extension
+              </li>
+              <li>
+                <strong className="text-foreground">MyTonWallet</strong> — browser
+                and desktop
+              </li>
+              <li>
+                <strong className="text-foreground">Tonhub</strong>,{' '}
+                <strong className="text-foreground">OpenMask</strong>,{' '}
+                <strong className="text-foreground">XTON Wallet</strong> and other
+                TON Connect wallets
+              </li>
+              <li>
+                <strong className="text-foreground">Telegram Wallet</strong> —
+                open the dApp inside Telegram; TON Connect routes the sign
+                request to your Telegram wallet
+              </li>
+            </ul>
+            <Callout title="Network">
+              Pick the same network in the wallet and in OpenFragment (mainnet for
+              production). If the wallet is on testnet while the app is on mainnet,
+              deploy will fail with a network mismatch — switch network in the
+              wallet and reconnect.
+            </Callout>
+            <p className="mt-4 text-muted-foreground">
+              Manage and Create use the same connection. You can disconnect and
+              connect a different wallet at any time before signing.
+            </p>
+          </DocSection>
+
           <DocSection id="deploy" title="Deploying a token">
             <ol className="space-y-4 list-decimal pl-5">
               <li>
-                Open <a href="/create" className="text-[#0098EA] font-semibold hover:underline">Create</a> and connect Tonkeeper.
+                Open <a href="/create" className="text-[#0098EA] font-semibold hover:underline">Create</a> and click{' '}
+                <strong>Connect Wallet</strong>. Choose Tonkeeper, MyTonWallet,
+                Telegram Wallet, or any other TON Connect option in the list.
               </li>
               <li>
                 Upload a logo (validated server-side), set name, symbol,
@@ -216,8 +272,12 @@ export function DocsPage() {
                 {DEPLOY_PLATFORM_FEE_TON} TON platform fee.
               </li>
               <li>
+                Approve the transaction in your wallet app (push notification on
+                mobile or the extension popup in the browser).
+              </li>
+              <li>
                 After confirmation, the jetton appears in your wallet and is
-                registered on the launchpad automatically.
+                registered on the launchpad automatically for all visitors.
               </li>
             </ol>
             <Callout title="Mainnet safety">
@@ -259,8 +319,13 @@ export function DocsPage() {
               <li>Dev wallet and contract address on each card</li>
             </ul>
             <p className="mt-3 text-muted-foreground">
-              Registry is stored on a shared backend so tokens stay visible across
-              browsers and devices.
+              Registry is stored on a shared backend (Vercel Redis / KV when
+              linked, with a public fallback) so tokens stay visible across
+              browsers and devices — no wallet needed to browse.
+            </p>
+            <p className="mt-3 text-muted-foreground">
+              Cards load in two stages: the list appears immediately, then on-chain
+              supply and DEX prices refresh in the background.
             </p>
           </DocSection>
 
@@ -285,14 +350,15 @@ export function DocsPage() {
               stored in minter storage at deploy time.
             </p>
             <p className="mt-3 text-muted-foreground">
-              Source:{' '}
+              Full source (React app, API routes, docs page, Tolk contracts,
+              tests, CI):{' '}
               <a
-                href="https://github.com/rapkuryer-dot/openfragment-ton"
+                href={GITHUB_REPO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-[#0098EA] font-semibold hover:underline"
               >
-                openfragment-ton on GitHub
+                openfragment on GitHub
                 <ExternalLink className="size-3.5" />
               </a>
             </p>
@@ -337,22 +403,76 @@ export function DocsPage() {
               a="No further mints are possible. Supply is fixed. Transfer tax remains as deployed."
             />
             <Faq
+              q="Which wallet should I use?"
+              a="Any TON Connect 2 wallet works. Tonkeeper and MyTonWallet are the most common on desktop; Telegram Wallet is convenient if you open OpenFragment inside Telegram."
+            />
+            <Faq
               q="Need help?"
               a={
                 <>
-                  Join{' '}
+                  Join our{' '}
                   <a
                     href={TELEGRAM_COMMUNITY_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#0098EA] font-semibold hover:underline"
                   >
-                    Telegram
+                    Telegram community
+                  </a>{' '}
+                  or email{' '}
+                  <a
+                    href={SUPPORT_EMAIL_MAILTO}
+                    className="text-[#0098EA] font-semibold hover:underline"
+                  >
+                    {SUPPORT_EMAIL}
                   </a>
                   .
                 </>
               }
             />
+          </DocSection>
+
+          <DocSection id="support" title="Support & contact">
+            <p>
+              For bugs, partnership questions, or help with a stuck deploy, reach
+              us through any channel below. Include your jetton address and a
+              screenshot of the wallet error if something failed on-chain.
+            </p>
+            <ul className="mt-4 space-y-3">
+              <li className="rounded-2xl border border-black/[0.06] bg-[#FAFAFB] px-4 py-3.5">
+                <p className="font-bold">Telegram</p>
+                <a
+                  href={TELEGRAM_COMMUNITY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 text-[#0098EA] font-semibold hover:underline"
+                >
+                  OPENFRAGMENT community
+                  <ExternalLink className="size-3.5" />
+                </a>
+              </li>
+              <li className="rounded-2xl border border-black/[0.06] bg-[#FAFAFB] px-4 py-3.5">
+                <p className="font-bold">Email</p>
+                <a
+                  href={SUPPORT_EMAIL_MAILTO}
+                  className="mt-1 text-[#0098EA] font-semibold hover:underline"
+                >
+                  {SUPPORT_EMAIL}
+                </a>
+              </li>
+              <li className="rounded-2xl border border-black/[0.06] bg-[#FAFAFB] px-4 py-3.5">
+                <p className="font-bold">Source code</p>
+                <a
+                  href={GITHUB_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 text-[#0098EA] font-semibold hover:underline"
+                >
+                  {GITHUB_REPO_URL.replace('https://github.com/', '')}
+                  <ExternalLink className="size-3.5" />
+                </a>
+              </li>
+            </ul>
           </DocSection>
         </article>
       </div>

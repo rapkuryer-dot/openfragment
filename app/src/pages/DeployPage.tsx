@@ -107,7 +107,7 @@ export function DeployPage({ network }: Props) {
     if (walletChain && walletChain !== expectedChain) {
       setStatus({
         type: 'error',
-        message: `Wallet network mismatch. Switch Tonkeeper to ${network === 'mainnet' ? 'Mainnet' : 'Testnet'} and reconnect.`,
+        message: `Wallet network mismatch. Switch your wallet to ${network === 'mainnet' ? 'Mainnet' : 'Testnet'} and reconnect.`,
       });
       return;
     }
@@ -219,7 +219,7 @@ export function DeployPage({ network }: Props) {
       setStatus({
         type: 'info',
         message:
-          'Switch to Tonkeeper to confirm the transaction. The request will appear there in a moment.',
+          'Confirm the transaction in your connected wallet (Tonkeeper, MyTonWallet, Telegram Wallet, etc.).',
       });
 
       if (import.meta.env.DEV) {
@@ -297,7 +297,7 @@ export function DeployPage({ network }: Props) {
         setStatus({
           type: 'error',
           message:
-            'Wallet did not receive the request. Click "Connect Wallet" to reconnect Tonkeeper and try again.',
+            'Wallet did not receive the request. Click "Connect Wallet" to pick your wallet again and retry.',
         });
       } else {
         setStatus({ type: 'error', message: msg });
@@ -334,7 +334,7 @@ export function DeployPage({ network }: Props) {
                       Mainnet deployment. Use a dedicated wallet with limited TON.
                     </AlertTitle>
                     <p className="text-sm text-muted-foreground">
-                      Never share seed/private keys. Verify the address, amount, and network in Tonkeeper before signing.
+                      Never share seed/private keys. Verify the address, amount, and network in your wallet before signing.
                     </p>
                   </div>
                 </Alert>
