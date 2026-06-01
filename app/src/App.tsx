@@ -12,6 +12,7 @@ import {
 import { DeployPage } from './pages/DeployPage';
 import { ManagePage } from './pages/ManagePage';
 import { LaunchpadPage } from './pages/LaunchpadPage';
+import { DocsPage } from './pages/DocsPage';
 import { LandingPage } from './pages/LandingPage';
 import { OFLogo } from './pages/LandingPage';
 import { TelegramIcon } from '@/components/TelegramIcon';
@@ -66,7 +67,7 @@ export default function App() {
                 className="flex gap-0.5 p-[3px] h-10 rounded-full items-center max-sm:h-9"
                 style={{ background: '#F0F1F3' }}
               >
-                {(['create', 'launchpad', 'manage'] as const).map((p) => (
+                {(['create', 'launchpad', 'manage', 'docs'] as const).map((p) => (
                   <Button
                     key={p}
                     variant="ghost"
@@ -82,7 +83,9 @@ export default function App() {
                       ? 'Create'
                       : p === 'launchpad'
                         ? 'Launchpad'
-                        : 'Manage'}
+                        : p === 'docs'
+                          ? 'Docs'
+                          : 'Manage'}
                   </Button>
                 ))}
               </nav>
@@ -121,13 +124,19 @@ export default function App() {
           <main
             key={page}
             className={`of-page-enter flex-1 w-full mx-auto px-6 pt-24 pb-15 max-sm:px-4 max-sm:pt-28 max-sm:pb-12 ${
-              page === 'launchpad' ? 'max-w-[1140px]' : 'max-w-[960px]'
+              page === 'launchpad'
+                ? 'max-w-[1140px]'
+                : page === 'docs'
+                  ? 'max-w-[1080px]'
+                  : 'max-w-[960px]'
             }`}
           >
             {page === 'create' ? (
               <DeployPage network={network} />
             ) : page === 'launchpad' ? (
               <LaunchpadPage network={network} />
+            ) : page === 'docs' ? (
+              <DocsPage />
             ) : (
               <ManagePage
                 network={network}

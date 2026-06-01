@@ -425,6 +425,13 @@ html {
   transform: translateY(0);
 }
 
+.of-landing-nav--dark .of-navlink {
+  color: rgba(255, 255, 255, 0.78);
+}
+.of-landing-nav--dark .of-navlink:hover {
+  color: #fff;
+}
+
 /* Bottom reveal: dark panel pinned to the viewport bottom while the opaque
    light content (z-10) scrolls up over it — the panel appears to rise from the
    bottom of the screen, smoothly, tied 1:1 to scroll (no JS, no jank). */

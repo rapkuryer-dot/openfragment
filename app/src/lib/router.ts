@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-type Page = 'landing' | 'create' | 'manage' | 'launchpad';
+type Page = 'landing' | 'create' | 'manage' | 'launchpad' | 'docs';
 
 interface Route {
   page: Page;
@@ -19,13 +19,20 @@ function parseRoute(): Route {
   if (path === '/create') return { page: 'create', isTestnet, address: null };
   if (path === '/launchpad')
     return { page: 'launchpad', isTestnet, address: null };
+  if (path === '/docs') return { page: 'docs', isTestnet, address: null };
   return { page: 'landing', isTestnet: false, address: null };
 }
 
 function buildUrl(page: Page, testnet: boolean, address?: string | null) {
   if (page === 'landing') return '/';
   const path =
-    page === 'manage' ? '/manage' : page === 'launchpad' ? '/launchpad' : '/create';
+    page === 'manage'
+      ? '/manage'
+      : page === 'launchpad'
+        ? '/launchpad'
+        : page === 'docs'
+          ? '/docs'
+          : '/create';
   const params = new URLSearchParams();
   if (testnet) params.set('testnet', 'true');
   if (page === 'manage' && address) params.set('address', address);

@@ -21,22 +21,32 @@ import {
   CircuitBoard,
   KeyRound,
   Fingerprint,
+  BookOpen,
 } from 'lucide-react';
 import { TelegramIcon } from '@/components/TelegramIcon';
 import { TELEGRAM_COMMUNITY_URL, X_URL } from '@/lib/siteLinks';
+import { useDarkFooterZone } from '@/hooks/useDarkFooterZone';
+import { useLandingNavScroll } from '@/hooks/useLandingNavScroll';
 
 interface Props {
   onLaunch: () => void;
 }
 
 export function LandingPage({ onLaunch }: Props) {
+  const navExpanded = useLandingNavScroll(48);
+
   return (
     <div className="of-landing relative min-h-screen text-[#0A0A0B] font-sans antialiased bg-white">
-      <Nav onLaunch={onLaunch} />
+      <Nav onLaunch={onLaunch} expanded={navExpanded} />
       {/* Light content layer — opaque white so it fully covers the dark panel
          below it until the user scrolls to the very bottom. */}
       <div className="of-reveal-content relative z-10 bg-white">
-        <div className="h-16 shrink-0" aria-hidden />
+        <div
+          className={`shrink-0 transition-[height] duration-300 ease-out ${
+            navExpanded ? 'h-32' : 'h-16'
+          }`}
+          aria-hidden
+        />
         <Hero onLaunch={onLaunch} />
         <Marquee />
         <Stats />
@@ -261,75 +271,128 @@ function XIcon({ className = '' }: { className?: string }) {
 
 /* ---------- Nav ---------- */
 
-function Nav({ onLaunch }: { onLaunch: () => void }) {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+function Nav({
+  onLaunch,
+  expanded,
+}: {
+  onLaunch: () => void;
+  expanded: boolean;
+}) {
+  const overDark = useDarkFooterZone();
+  const dark = overDark;
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'backdrop-blur-xl bg-white/90 border-b border-black/[0.06] shadow-sm'
-          : 'bg-white/80 border-b border-black/[0.04]'
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+        dark
+          ? 'backdrop-blur-xl bg-[#0A0A0B]/88 border-b border-white/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.45)]'
+          : expanded
+            ? 'backdrop-blur-xl bg-white/92 border-b border-black/[0.06] shadow-sm'
+            : 'bg-white/80 border-b border-black/[0.04]'
       }`}
     >
       <div
-        className={`max-w-[1200px] mx-auto px-6 flex items-center justify-between transition-[height] duration-300 ease-out ${
-          scrolled ? 'h-20' : 'h-16'
+        className={`max-w-[1200px] mx-auto px-6 flex items-center justify-between transition-all duration-300 ease-out ${
+          expanded ? 'h-32' : 'h-16'
         }`}
       >
-        <div className="flex items-center gap-2.5 text-[#0A0A0B]">
-          <OFLogo size={scrolled ? 34 : 30} />
+        <div
+          className={`flex items-center gap-2.5 transition-colors duration-300 ${
+            dark ? 'text-white' : 'text-[#0A0A0B]'
+          }`}
+        >
+          <OFLogo size={expanded ? 44 : 30} />
           <div
             className={`font-display font-bold tracking-[0.12em] transition-all duration-300 ${
-              scrolled ? 'text-[17px]' : 'text-[16px]'
+              expanded ? 'text-[20px]' : 'text-[16px]'
             }`}
           >
             OPEN<span className="text-[#0098EA]">FRAGMENT</span>
           </div>
         </div>
-        <nav className="hidden md:flex items-center gap-1 bg-white/70 ring-1 ring-black/[0.05] shadow-[0_4px_16px_-8px_rgba(20,30,80,0.18)] backdrop-blur rounded-full p-1">
-          <NavLink href="#features">Features</NavLink>
-          <NavLink href="#how">How it works</NavLink>
-          <NavLink href="#security">Security</NavLink>
+        <nav
+          className={`of-landing-nav hidden md:flex items-center gap-1 backdrop-blur rounded-full transition-all duration-300 ease-out ${
+            expanded ? 'p-2 gap-1.5' : 'p-1'
+          } ${dark ? 'of-landing-nav--dark' : ''} ${
+            dark
+              ? 'bg-white/10 ring-1 ring-white/15 shadow-[0_8px_28px_-8px_rgba(0,0,0,0.5)]'
+              : 'bg-white/70 ring-1 ring-black/[0.05] shadow-[0_4px_16px_-8px_rgba(20,30,80,0.18)]'
+          }`}
+        >
+          <NavLink href="#features" expanded={expanded} dark={dark}>
+            Features
+          </NavLink>
+          <NavLink href="#how" expanded={expanded} dark={dark}>
+            How it works
+          </NavLink>
+          <NavLink href="#security" expanded={expanded} dark={dark}>
+            Security
+          </NavLink>
+          <NavLink href="/docs" expanded={expanded} dark={dark}>
+            <BookOpen
+              className={`relative z-10 shrink-0 ${expanded ? 'size-4' : 'size-3.5'}`}
+            />
+            Docs
+          </NavLink>
           <a
             href="/launchpad"
-            className="of-navlink relative inline-flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold rounded-full transition-colors duration-200"
+            className={`of-navlink relative inline-flex items-center gap-1.5 font-semibold rounded-full transition-all duration-300 ${
+              expanded ? 'px-6 py-3 text-[15px] gap-2' : 'px-4 py-1.5 text-[13px]'
+            } ${dark ? 'text-white/90' : ''}`}
           >
-            <Rocket className="relative z-10 size-3.5" />
+            <Rocket className={`relative z-10 shrink-0 ${expanded ? 'size-4' : 'size-3.5'}`} />
             <span className="relative z-10">Launchpad</span>
           </a>
         </nav>
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center transition-all duration-300 ${expanded ? 'gap-3' : 'gap-2'}`}>
           <a
             href={X_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:inline-flex size-9 items-center justify-center rounded-full border border-black/[0.08] text-black/70 hover:text-black hover:border-black/[0.2] transition-colors"
+            className={`hidden sm:inline-flex items-center justify-center rounded-full border transition-colors ${
+              expanded ? 'size-12' : 'size-9'
+            } ${
+              dark
+                ? 'border-white/20 text-white/85 hover:text-white hover:border-white/40 hover:bg-white/10'
+                : 'border-black/[0.08] text-black/70 hover:text-black hover:border-black/[0.2]'
+            }`}
             title="@openfragment on X"
+            aria-label="X"
           >
-            <XIcon className="size-3.5" />
+            <XIcon className={expanded ? 'size-4' : 'size-3.5'} />
           </a>
           <a
             href={TELEGRAM_COMMUNITY_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:inline-flex size-9 items-center justify-center rounded-full border border-black/[0.08] text-[#229ED9] hover:text-[#0088cc] hover:border-black/[0.2] transition-colors"
+            className={`hidden sm:inline-flex items-center justify-center rounded-full border transition-colors ${
+              expanded ? 'size-12' : 'size-9'
+            } ${
+              dark
+                ? 'border-white/20 text-[#3DA8FF] hover:border-white/40 hover:bg-white/10'
+                : 'border-black/[0.08] text-[#229ED9] hover:text-[#0088cc] hover:border-black/[0.2]'
+            }`}
             title="OPENFRAGMENT on Telegram"
+            aria-label="Telegram"
           >
-            <TelegramIcon className="size-[18px]" />
+            <TelegramIcon className={expanded ? 'size-5' : 'size-[18px]'} />
           </a>
           <button
             onClick={onLaunch}
-            className="group flex items-center gap-1.5 bg-[#0A0A0B] text-white text-[13px] font-semibold px-4 py-2 rounded-full hover:bg-[#0098EA] transition-colors"
+            className={`group flex items-center gap-1.5 font-semibold rounded-full transition-all duration-300 ${
+              expanded ? 'text-[15px] px-6 py-3' : 'text-[13px] px-4 py-2'
+            } ${
+              dark
+                ? 'bg-[#0098EA] text-white hover:bg-[#3DA8FF]'
+                : 'bg-[#0A0A0B] text-white hover:bg-[#0098EA]'
+            }`}
           >
             Launch App
-            <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight
+              className={`transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
+                expanded ? 'size-4' : 'size-3.5'
+              }`}
+            />
           </button>
         </div>
       </div>
@@ -337,11 +400,23 @@ function Nav({ onLaunch }: { onLaunch: () => void }) {
   );
 }
 
-function NavLink({ href, children }: { href: string; children: ReactNode }) {
+function NavLink({
+  href,
+  children,
+  expanded,
+  dark,
+}: {
+  href: string;
+  children: ReactNode;
+  expanded: boolean;
+  dark: boolean;
+}) {
   return (
     <a
       href={href}
-      className="of-navlink relative px-4 py-1.5 text-[13px] font-semibold rounded-full transition-colors duration-200"
+      className={`of-navlink relative inline-flex items-center gap-1.5 font-semibold rounded-full transition-all duration-300 ${
+        expanded ? 'px-6 py-3 text-[15px]' : 'px-4 py-1.5 text-[13px]'
+      } ${dark ? 'text-white/90' : ''}`}
     >
       <span className="relative z-10">{children}</span>
     </a>
@@ -1044,6 +1119,9 @@ function Footer() {
           <a href="/launchpad" className="hover:text-white transition-colors">
             Launchpad
           </a>
+          <a href="/docs" className="hover:text-white transition-colors">
+            Docs
+          </a>
           <a href="#features" className="hover:text-white transition-colors">
             Features
           </a>
@@ -1060,7 +1138,8 @@ function Footer() {
             className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
             title="@openfragment on X"
           >
-            <XIcon className="size-3" />X / Twitter
+            <XIcon className="size-3" />
+            X
           </a>
           <a
             href={TELEGRAM_COMMUNITY_URL}
