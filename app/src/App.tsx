@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DeployPage } from './pages/DeployPage';
 import { ManagePage } from './pages/ManagePage';
+import { LaunchpadPage } from './pages/LaunchpadPage';
 import { LandingPage } from './pages/LandingPage';
 import { OFLogo } from './pages/LandingPage';
 import { TelegramIcon } from '@/components/TelegramIcon';
@@ -65,30 +66,25 @@ export default function App() {
                 className="flex gap-0.5 p-[3px] h-10 rounded-full items-center max-sm:h-9"
                 style={{ background: '#F0F1F3' }}
               >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`rounded-full px-4 h-[34px] text-[15px] font-bold max-sm:h-[30px] max-sm:px-3.5 max-sm:text-[13px] hover:bg-transparent ${
-                    page === 'create'
-                      ? 'bg-[#0098EA] text-white hover:bg-[#0098EA] hover:text-white'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  onClick={() => go('create')}
-                >
-                  Create
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`rounded-full px-4 h-[34px] text-[15px] font-bold max-sm:h-[30px] max-sm:px-3.5 max-sm:text-[13px] hover:bg-transparent ${
-                    page === 'manage'
-                      ? 'bg-[#0098EA] text-white hover:bg-[#0098EA] hover:text-white'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  onClick={() => go('manage')}
-                >
-                  Manage
-                </Button>
+                {(['create', 'launchpad', 'manage'] as const).map((p) => (
+                  <Button
+                    key={p}
+                    variant="ghost"
+                    size="sm"
+                    className={`rounded-full px-4 h-[34px] text-[15px] font-bold max-sm:h-[30px] max-sm:px-3 max-sm:text-[13px] hover:bg-transparent ${
+                      page === p
+                        ? 'bg-[#0098EA] text-white hover:bg-[#0098EA] hover:text-white'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    onClick={() => go(p)}
+                  >
+                    {p === 'create'
+                      ? 'Create'
+                      : p === 'launchpad'
+                        ? 'Launchpad'
+                        : 'Manage'}
+                  </Button>
+                ))}
               </nav>
             </div>
             <div className="flex items-center gap-2.5">
@@ -124,10 +120,14 @@ export default function App() {
 
           <main
             key={page}
-            className="of-page-enter flex-1 max-w-[960px] w-full mx-auto px-6 pt-24 pb-15 max-sm:px-4 max-sm:pt-28 max-sm:pb-12"
+            className={`of-page-enter flex-1 w-full mx-auto px-6 pt-24 pb-15 max-sm:px-4 max-sm:pt-28 max-sm:pb-12 ${
+              page === 'launchpad' ? 'max-w-[1140px]' : 'max-w-[960px]'
+            }`}
           >
             {page === 'create' ? (
               <DeployPage network={network} />
+            ) : page === 'launchpad' ? (
+              <LaunchpadPage network={network} />
             ) : (
               <ManagePage
                 network={network}

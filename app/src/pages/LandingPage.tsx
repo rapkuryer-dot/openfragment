@@ -30,24 +30,12 @@ interface Props {
 }
 
 export function LandingPage({ onLaunch }: Props) {
-  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
-
-  useEffect(() => {
-    const onMouse = (e: globalThis.MouseEvent) =>
-      setMouse({
-        x: e.clientX / window.innerWidth,
-        y: e.clientY / window.innerHeight,
-      });
-    window.addEventListener('mousemove', onMouse);
-    return () => window.removeEventListener('mousemove', onMouse);
-  }, []);
-
   return (
     <div className="of-landing relative min-h-screen text-[#0A0A0B] font-sans antialiased bg-white">
       <Nav onLaunch={onLaunch} />
       <div className="h-16 shrink-0" aria-hidden />
       <div className="overflow-x-hidden">
-        <Hero onLaunch={onLaunch} mouse={mouse} />
+        <Hero onLaunch={onLaunch} />
         <Marquee />
         <Stats />
         <Features />
@@ -341,13 +329,34 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
 
 /* ---------- Hero ---------- */
 
-function Hero({
-  onLaunch,
-  mouse,
-}: {
-  onLaunch: () => void;
-  mouse: { x: number; y: number };
-}) {
+function Hero({ onLaunch }: { onLaunch: () => void }) {
+  // Mouse state lives here (not in LandingPage) so cursor movement only
+  // re-renders the hero subtree, never the whole page. rAF coalesces the
+  // high-frequency mousemove events down to one update per frame.
+  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    let next = { x: 0.5, y: 0.5 };
+    const onMouse = (e: globalThis.MouseEvent) => {
+      next = {
+        x: e.clientX / window.innerWidth,
+        y: e.clientY / window.innerHeight,
+      };
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        setMouse(next);
+      });
+    };
+    window.addEventListener('mousemove', onMouse, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', onMouse);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <section
       className="relative overflow-hidden pt-20 pb-28 px-6 min-h-[88vh] flex items-center"

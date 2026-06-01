@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { buildDeployMessage, parseUnits } from '../lib/deploy';
+import { registerDeploy } from '../lib/launchpad';
 import { getErrorMessage, isCancelledTransactionError } from '../lib/errors';
 import {
   uploadImageToCatbox,
@@ -190,7 +191,9 @@ export function DeployPage({ network }: Props) {
         return;
       }
 
-      console.log('[OPENFRAGMENT] Off-chain metadata URI:', metadataUri);
+      if (import.meta.env.DEV) {
+        console.log('[OPENFRAGMENT] Off-chain metadata URI:', metadataUri);
+      }
 
       const { contractAddress, stateInit, mintBody } = await buildDeployMessage(
         {
@@ -211,14 +214,16 @@ export function DeployPage({ network }: Props) {
           'Switch to Tonkeeper to confirm the transaction. The request will appear there in a moment.',
       });
 
-      console.group('[OPENFRAGMENT] Sending TON Connect transaction');
-      console.log('Wallet:', wallet?.device);
-      console.log('Wallet account:', wallet?.account);
-      console.log('TonConnect connected:', tonConnectUI.connected);
-      console.log('Target contract:', contractAddress.toString());
-      console.log('Network:', network);
-      console.log('Sending request to bridge...');
-      console.groupEnd();
+      if (import.meta.env.DEV) {
+        console.group('[OPENFRAGMENT] Sending TON Connect transaction');
+        console.log('Wallet:', wallet?.device);
+        console.log('Wallet account:', wallet?.account);
+        console.log('TonConnect connected:', tonConnectUI.connected);
+        console.log('Target contract:', contractAddress.toString());
+        console.log('Network:', network);
+        console.log('Sending request to bridge...');
+        console.groupEnd();
+      }
 
       await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 300,
@@ -248,7 +253,21 @@ export function DeployPage({ network }: Props) {
       });
       setDeployedAddress(friendlyAddr);
       setStatus({ type: 'success', message: 'Jetton deployed successfully!' });
-      console.log('[OPENFRAGMENT] Deploy success — address:', friendlyAddr);
+
+      // Add to the public Launchpad (shared registry + this browser's local list).
+      void registerDeploy({
+        address: friendlyAddr,
+        network,
+        devWallet: wallet?.account?.address,
+        name: name.trim(),
+        symbol: symbol.trim(),
+        image: publicImageUrl,
+        createdAt: Date.now(),
+      });
+
+      if (import.meta.env.DEV) {
+        console.log('[OPENFRAGMENT] Deploy success — address:', friendlyAddr);
+      }
     } catch (err) {
       console.error('[OPENFRAGMENT] Deploy error:', err);
       const msg = getErrorMessage(err) || 'Deployment failed';

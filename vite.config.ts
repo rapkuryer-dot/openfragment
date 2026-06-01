@@ -9,7 +9,9 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   root: 'app',
   envDir: projectRoot,
-  envPrefix: ['VITE_', 'TONCENTER_'],
+  // NOTE: TONCENTER_* keys are intentionally NOT exposed to the client bundle.
+  // They are consumed server-side only by the /api/toncenter proxy.
+  envPrefix: ['VITE_'],
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

@@ -154,6 +154,10 @@
 
   html {
     scroll-behavior: smooth;
+    /* Guard against any 1px horizontal overflow leaving a white edge.
+       `clip` (not `hidden`) avoids creating a scroll container, so
+       position: sticky on the dApp sidebars keeps working. */
+    overflow-x: clip;
   }
 
   /* Anchor scroll offset so sticky header doesn't cover the target */
@@ -422,11 +426,13 @@
   transform: scaleX(1);
 }
 
-/* Full-bleed section: breaks out to viewport width */
+/* Full-bleed section: spans the full width of its (already full-width) parent.
+   Avoid 100vw + negative margins here — 100vw includes the scrollbar gutter,
+   which shifts the block left and leaves a white sliver on the right edge. */
 .of-fullbleed {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 /* Switzer-based prose paragraph */
