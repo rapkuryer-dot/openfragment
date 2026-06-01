@@ -37,6 +37,8 @@ export interface LaunchpadToken {
   createdAt?: number;
   priceUsd?: number;
   marketCapUsd?: number;
+  /** 24h DEX volume (USD) on STON.fi pools for this jetton. */
+  volume24hUsd?: number;
   graduationTargetUsd?: number;
   graduationProgress?: number;
   graduated?: boolean;
@@ -48,6 +50,25 @@ export const GRADUATION_NEAR = 0.8;
 const LS_KEY = 'of:launchpad:deploys';
 const STON_CONCURRENCY = 4;
 const STON_TIMEOUT_MS = 4_000;
+const STON_POOL_STATS_TTL_MS = 120_000;
+/** Native TON + STON proxy TON on mainnet. */
+const STON_TON_ASSET_IDS = new Set([
+  'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c',
+  'EQCM3B12QK1e4yZSf8GtBRT0aLMNyEsBc_DhVfRRtOEffLez',
+]);
+
+type StonPoolStat = {
+  base_id: string;
+  quote_id: string;
+  base_symbol?: string;
+  quote_symbol?: string;
+  base_volume?: string;
+  quote_volume?: string;
+  lp_price_usd?: string;
+};
+
+let stonPoolStatsCache: { at: number; stats: StonPoolStat[] } | null = null;
+let stonPoolStatsInflight: Promise<StonPoolStat[]> | null = null;
 const REGISTRY_TIMEOUT_MS = 3_500;
 const TONCENTER_TIMEOUT_MS = 10_000;
 const TON_USD_TTL_MS = 5 * 60_000;
@@ -311,6 +332,159 @@ async function mapPool<T, R>(
   return out;
 }
 
+function friendlyJettonId(raw: string, network: Network): string | null {
+  try {
+    return Address.parse(raw.trim()).toString({
+      bounceable: true,
+      testOnly: network === 'testnet',
+    });
+  } catch {
+    return null;
+  }
+}
+
+function parseStonAmount(value: unknown): number {
+  const n =
+    typeof value === 'string'
+      ? parseFloat(value)
+      : typeof value === 'number'
+        ? value
+        : NaN;
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function isStonTonLike(assetId: string, symbol?: string): boolean {
+  return (
+    STON_TON_ASSET_IDS.has(assetId) || symbol === 'TON' || symbol === 'pTON'
+  );
+}
+
+/** Estimate 24h pool volume in USD from STON pool stats row. */
+function poolStatVolumeUsd(stat: StonPoolStat, tonUsd: number): number {
+  if (isStonTonLike(stat.base_id, stat.base_symbol)) {
+    return parseStonAmount(stat.base_volume) * tonUsd;
+  }
+  if (isStonTonLike(stat.quote_id, stat.quote_symbol)) {
+    return parseStonAmount(stat.quote_volume) * tonUsd;
+  }
+  const lpUsd = parseStonAmount(stat.lp_price_usd);
+  if (lpUsd > 0) {
+    return (
+      (parseStonAmount(stat.base_volume) + parseStonAmount(stat.quote_volume)) *
+      lpUsd *
+      0.5
+    );
+  }
+  return 0;
+}
+
+function stonStatsRange24h(): { since: string; until: string } {
+  const until = new Date();
+  const since = new Date(until.getTime() - 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) => d.toISOString().slice(0, 19);
+  return { since: fmt(since), until: fmt(until) };
+}
+
+async function fetchStonPoolStats24h(): Promise<StonPoolStat[]> {
+  if (stonPoolStatsCache && Date.now() - stonPoolStatsCache.at < STON_POOL_STATS_TTL_MS) {
+    return stonPoolStatsCache.stats;
+  }
+  if (stonPoolStatsInflight) return stonPoolStatsInflight;
+
+  stonPoolStatsInflight = (async () => {
+    try {
+      const { since, until } = stonStatsRange24h();
+      const params = new URLSearchParams({ since, until });
+      const res = await fetch(
+        `https://api.ston.fi/v1/stats/pool?${params}`,
+        {
+          headers: { Accept: 'application/json' },
+          signal: AbortSignal.timeout(12_000),
+        },
+      );
+      if (!res.ok) return [];
+      const json = (await res.json()) as { stats?: StonPoolStat[] };
+      const stats = Array.isArray(json.stats) ? json.stats : [];
+      stonPoolStatsCache = { at: Date.now(), stats };
+      return stats;
+    } catch {
+      return [];
+    } finally {
+      stonPoolStatsInflight = null;
+    }
+  })();
+
+  return stonPoolStatsInflight;
+}
+
+/** Sum 24h STON.fi volume per jetton (friendly EQ address). */
+function aggregateVolume24hUsd(
+  stats: StonPoolStat[],
+  jettonIds: Set<string>,
+  tonUsd: number,
+): Map<string, number> {
+  const vol = new Map<string, number>();
+  for (const id of jettonIds) vol.set(id, 0);
+
+  for (const stat of stats) {
+    const poolUsd = poolStatVolumeUsd(stat, tonUsd);
+    if (poolUsd <= 0) continue;
+
+    const baseOurs = jettonIds.has(stat.base_id);
+    const quoteOurs = jettonIds.has(stat.quote_id);
+    if (baseOurs) {
+      vol.set(stat.base_id, (vol.get(stat.base_id) ?? 0) + poolUsd);
+    }
+    if (quoteOurs && stat.quote_id !== stat.base_id) {
+      vol.set(stat.quote_id, (vol.get(stat.quote_id) ?? 0) + poolUsd);
+    }
+  }
+
+  return vol;
+}
+
+async function fetchJettonPoolVolume24hUsd(
+  friendlyAddress: string,
+): Promise<number> {
+  const seen = new Set<string>();
+  let total = 0;
+
+  for (const tonId of STON_TON_ASSET_IDS) {
+    for (const pair of [
+      [friendlyAddress, tonId],
+      [tonId, friendlyAddress],
+    ] as const) {
+      try {
+        const res = await fetch(
+          `https://api.ston.fi/v1/pools/by_market/${encodeURIComponent(pair[0])}/${encodeURIComponent(pair[1])}`,
+          {
+            headers: { Accept: 'application/json' },
+            signal: AbortSignal.timeout(STON_TIMEOUT_MS),
+          },
+        );
+        if (!res.ok) continue;
+        const json = (await res.json()) as {
+          pool_list?: { address?: string; volume_24h_usd?: string }[];
+        };
+        for (const p of json.pool_list ?? []) {
+          if (!p.address || seen.has(p.address)) continue;
+          seen.add(p.address);
+          const v = parseStonAmount(p.volume_24h_usd);
+          if (v > 0) total += v;
+        }
+      } catch {
+        /* skip pair */
+      }
+    }
+  }
+
+  return total;
+}
+
+export function sumLaunchpadVolume24hUsd(tokens: LaunchpadToken[]): number {
+  return tokens.reduce((acc, t) => acc + (t.volume24hUsd ?? 0), 0);
+}
+
 async function fetchPriceUsd(
   network: Network,
   friendlyAddress: string,
@@ -472,6 +646,34 @@ export async function enrichLaunchpadTokens(
     }
     return t;
   });
+
+  const tonUsdRate = tonUsd ?? 0;
+  if (network === 'mainnet' && tonUsdRate > 0) {
+    const jettonIds = new Set<string>();
+    for (const t of real) {
+      const id =
+        friendlyByRaw.get(t.address) ?? friendlyJettonId(t.address, network);
+      if (id) jettonIds.add(id);
+    }
+
+    if (jettonIds.size > 0) {
+      const stats = await fetchStonPoolStats24h();
+      const volMap = aggregateVolume24hUsd(stats, jettonIds, tonUsdRate);
+
+      await mapPool(real, STON_CONCURRENCY, async (t) => {
+        const id =
+          friendlyByRaw.get(t.address) ?? friendlyJettonId(t.address, network);
+        if (!id) return t;
+
+        let vol = volMap.get(id) ?? 0;
+        if (vol <= 0) {
+          vol = await fetchJettonPoolVolume24hUsd(id);
+        }
+        if (vol > 0) t.volume24hUsd = vol;
+        return t;
+      });
+    }
+  }
 
   return out;
 }

@@ -21,6 +21,7 @@ import {
   GRADUATION_TON,
   GRADUATION_NEAR,
   isRealLaunchpadToken,
+  sumLaunchpadVolume24hUsd,
   type LaunchpadToken,
 } from '../lib/launchpad';
 import { isLaunchpadDemoEnabled } from '../lib/launchpadDemo';
@@ -122,10 +123,12 @@ export function LaunchpadPage({ network }: Props) {
     return sorted;
   }, [data, query, view]);
 
-  const totalMcap = useMemo(
-    () => (data ?? []).reduce((acc, t) => acc + (t.marketCapUsd ?? 0), 0),
+  const totalVolume = useMemo(
+    () => sumLaunchpadVolume24hUsd(data ?? []),
     [data],
   );
+  const volumeLoading =
+    enrichQuery.isFetching && totalVolume === 0 && (data?.length ?? 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -145,7 +148,11 @@ export function LaunchpadPage({ network }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <StatPill label="Tokens" value={String((data ?? []).length)} />
-          <StatPill label="Total mcap" value={formatUsd(totalMcap)} />
+          <StatPill
+            label="Total volume"
+            value={volumeLoading ? '…' : formatUsd(totalVolume)}
+            title="Sum of 24h trading volume on STON.fi for all launchpad tokens"
+          />
         </div>
       </div>
 
@@ -245,9 +252,20 @@ export function LaunchpadPage({ network }: Props) {
   );
 }
 
-function StatPill({ label, value }: { label: string; value: string }) {
+function StatPill({
+  label,
+  value,
+  title,
+}: {
+  label: string;
+  value: string;
+  title?: string;
+}) {
   return (
-    <div className="rounded-2xl border border-black/[0.06] bg-white px-4 py-2.5 text-center min-w-[110px]">
+    <div
+      className="rounded-2xl border border-black/[0.06] bg-white px-4 py-2.5 text-center min-w-[110px]"
+      title={title}
+    >
       <div className="font-display text-[18px] font-bold tracking-tight tabular-nums">
         {value}
       </div>
