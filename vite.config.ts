@@ -22,17 +22,10 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     outDir: '../dist',
+    // Single app chunk — avoids infinite spinner when a split chunk fails to preload.
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined;
-          if (id.includes('/react/') || id.includes('/react-dom/'))
-            return 'react';
-          if (id.includes('/@ton/ton/') || id.includes('/@ton/core/'))
-            return 'ton-sdk';
-          if (id.includes('/@tonconnect/')) return 'tonconnect';
-          return undefined;
-        },
+        manualChunks: undefined,
       },
     },
   },

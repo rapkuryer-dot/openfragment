@@ -1,6 +1,6 @@
 import './polyfills';
 
-import { StrictMode, useEffect } from 'react';
+import { StrictMode, Suspense, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App';
@@ -32,7 +32,24 @@ function BootedApp() {
   );
 }
 
+function BootSplash() {
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center bg-white"
+      aria-busy="true"
+      aria-label="Loading OpenFragment"
+    >
+      <div
+        className="size-8 rounded-full border-[3px] border-[#0098EA]/20 border-t-[#0098EA] animate-spin"
+        role="presentation"
+      />
+    </div>
+  );
+}
+
 function mount() {
+  document.getElementById('of-boot-splash')?.remove();
+
   const el = document.getElementById('root');
   if (!el) {
     throw new Error('Root element #root not found');
@@ -40,7 +57,9 @@ function mount() {
 
   createRoot(el).render(
     <StrictMode>
-      <BootedApp />
+      <Suspense fallback={<BootSplash />}>
+        <BootedApp />
+      </Suspense>
     </StrictMode>,
   );
 }

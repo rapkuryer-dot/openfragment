@@ -34,25 +34,32 @@ export function clearBootReloadFlag(): void {
   }
 }
 
+function handleChunkFailure(err: unknown): void {
+  if (tryReloadOnceForChunkError()) return;
+  showBootError(
+    err instanceof Error
+      ? err
+      : new Error('Failed to load application. Clear cache and reload.'),
+  );
+}
+
 export function setupBootRecovery(): void {
   window.addEventListener('vite:preloadError', (event) => {
     event.preventDefault();
-    tryReloadOnceForChunkError();
+    handleChunkFailure(new Error('Module preload failed'));
   });
 
   window.addEventListener('unhandledrejection', (event) => {
     if (isChunkLoadError(event.reason)) {
       event.preventDefault();
-      if (tryReloadOnceForChunkError()) return;
-      showBootError(event.reason);
+      handleChunkFailure(event.reason);
     }
   });
 
   window.addEventListener('error', (event) => {
     if (isChunkLoadError(event.error ?? event.message)) {
       event.preventDefault();
-      if (tryReloadOnceForChunkError()) return;
-      showBootError(event.error ?? event.message);
+      handleChunkFailure(event.error ?? event.message);
     }
   });
 }
@@ -79,8 +86,8 @@ export function showBootError(err: unknown): void {
 
 function escapeHtml(s: string): string {
   return s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

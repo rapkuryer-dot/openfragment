@@ -16,14 +16,14 @@
       #root {
         min-height: 100vh;
       }
-      #root:empty {
+      #of-boot-splash {
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
         background: #fff;
       }
-      #root:empty::after {
+      #of-boot-splash::after {
         content: '';
         width: 32px;
         height: 32px;
@@ -89,7 +89,26 @@
     />
   </head>
   <body>
+    <div id="of-boot-splash" aria-busy="true" aria-label="Loading"></div>
     <div id="root"></div>
+    <script>
+      (function () {
+        var BOOT_MS = 20000;
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          var splash = document.getElementById('of-boot-splash');
+          if (!splash || (root && root.childElementCount > 0)) return;
+          splash.remove();
+          if (!root) return;
+          root.innerHTML =
+            '<div class="of-boot-error" role="alert">' +
+            '<p class="of-boot-error-title">OpenFragment did not start</p>' +
+            '<p class="of-boot-error-msg">Try a hard refresh (Cmd+Shift+R) or clear site cache.</p>' +
+            '<button type="button" class="of-boot-error-btn" onclick="location.reload()">Reload page</button>' +
+            '</div>';
+        }, BOOT_MS);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
