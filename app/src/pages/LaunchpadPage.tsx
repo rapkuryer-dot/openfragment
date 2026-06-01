@@ -15,7 +15,8 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import {
-  fetchLaunchpad,
+  enrichLaunchpadTokens,
+  fetchLaunchpadShell,
   GRADUATION_TON,
   GRADUATION_NEAR,
   type LaunchpadToken,
@@ -38,12 +39,30 @@ interface Props {
 type ViewKey = 'new' | 'mcap' | 'supply' | 'graduated';
 
 export function LaunchpadPage({ network }: Props) {
-  const { data, isLoading, isFetching, isError, refetch } = useQuery({
-    queryKey: ['launchpad', network],
-    queryFn: () => fetchLaunchpad(network),
-    staleTime: 30_000,
-    refetchInterval: 60_000,
+  const shellQuery = useQuery({
+    queryKey: ['launchpad', network, 'shell'],
+    queryFn: () => fetchLaunchpadShell(network),
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
+
+  const enrichQuery = useQuery({
+    queryKey: ['launchpad', network, 'enrich', shellQuery.dataUpdatedAt],
+    queryFn: () => enrichLaunchpadTokens(network, shellQuery.data!),
+    enabled: (shellQuery.data?.length ?? 0) > 0,
+    staleTime: 45_000,
+    refetchInterval: 90_000,
+    placeholderData: (prev) => prev ?? shellQuery.data,
+  });
+
+  const data = enrichQuery.data ?? shellQuery.data;
+  const isLoading = shellQuery.isLoading && !data?.length;
+  const isFetching = shellQuery.isFetching || enrichQuery.isFetching;
+  const isError = shellQuery.isError;
+  const refetch = () => {
+    void shellQuery.refetch();
+    void enrichQuery.refetch();
+  };
 
   const [query, setQuery] = useState('');
   const [view, setView] = useState<ViewKey>('new');
@@ -280,6 +299,14 @@ function TokenCard({
             <span className="truncate font-display text-[16px] font-bold tracking-tight">
               {token.name}
             </span>
+            {token.isDemo && (
+              <span
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/12 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-amber-700"
+                title="Preview token — layout demo only"
+              >
+                Preview
+              </span>
+            )}
             {token.graduated && (
               <span
                 className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--success)]/12 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-[var(--success)]"
@@ -352,33 +379,46 @@ function TokenCard({
 
       <div className="mt-4 flex items-center gap-2">
         <Button
-          asChild
+          asChild={!token.isDemo}
           size="sm"
           className="flex-1 rounded-full h-9 text-xs font-bold"
           style={{ background: '#0098EA' }}
+          disabled={token.isDemo}
         >
-          <a
-            href={tonviewerJettonUrl(network, token.address)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink className="size-3.5" />
-            Tonviewer
-          </a>
+          {token.isDemo ? (
+            <span className="inline-flex items-center gap-1.5 opacity-70">
+              <ExternalLink className="size-3.5" />
+              Tonviewer
+            </span>
+          ) : (
+            <a
+              href={tonviewerJettonUrl(network, token.address)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="size-3.5" />
+              Tonviewer
+            </a>
+          )}
         </Button>
         <Button
-          asChild
+          asChild={!token.isDemo}
           size="sm"
           variant="outline"
           className="flex-1 rounded-full h-9 text-xs font-bold"
+          disabled={token.isDemo}
         >
-          <a
-            href={stonFiSwapTonToJettonUrl(token.address)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Trade
-          </a>
+          {token.isDemo ? (
+            <span className="opacity-70">Trade</span>
+          ) : (
+            <a
+              href={stonFiSwapTonToJettonUrl(token.address)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Trade
+            </a>
+          )}
         </Button>
       </div>
     </div>

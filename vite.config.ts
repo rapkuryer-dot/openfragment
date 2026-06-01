@@ -9,6 +9,12 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   root: 'app',
   envDir: projectRoot,
+  define: {
+    // Preview tokens on /launchpad unless explicitly disabled at build time.
+    'import.meta.env.VITE_LAUNCHPAD_DEMO': JSON.stringify(
+      process.env.VITE_LAUNCHPAD_DEMO ?? 'true',
+    ),
+  },
   // NOTE: TONCENTER_* keys are intentionally NOT exposed to the client bundle.
   // They are consumed server-side only by the /api/toncenter proxy.
   envPrefix: ['VITE_'],
