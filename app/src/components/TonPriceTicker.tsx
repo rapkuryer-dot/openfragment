@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
-import { useDarkFooterZone } from '@/hooks/useDarkFooterZone';
+import { useTickerOverDark } from '@/hooks/useTickerOverDark';
 
 /** CoinGecko public endpoint; CORS OK from browsers. */
 const TON_USD_URL =
@@ -14,8 +14,9 @@ const REFRESH_MS = 30_000;
 export function TonPriceTicker() {
   const [usd, setUsd] = useState<number | null>(null);
   const [stale, setStale] = useState(false);
-  const onLanding = typeof window !== 'undefined' && window.location.pathname === '/';
-  const overDark = useDarkFooterZone(onLanding ? '.of-reveal-panel' : '__none__');
+  const onLanding =
+    typeof window !== 'undefined' && window.location.pathname === '/';
+  const overDark = useTickerOverDark(onLanding);
 
   useEffect(() => {
     let cancelled = false;
