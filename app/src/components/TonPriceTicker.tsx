@@ -14,7 +14,9 @@ const REFRESH_MS = 30_000;
 const pillBase =
   'group pointer-events-auto inline-flex items-center gap-1 rounded-full border shadow-sm backdrop-blur-md font-display text-[11px] font-semibold tabular-nums leading-tight whitespace-nowrap px-2.5 py-1.5 min-h-[30px] transition-[border-color,background-color,color] duration-200';
 
-export function TonPriceTicker() {
+type Variant = 'fixed' | 'inline';
+
+export function TonPriceTicker({ variant = 'fixed' }: { variant?: Variant }) {
   const [usd, setUsd] = useState<number | null>(null);
   const [stale, setStale] = useState(false);
   const onLanding =
@@ -65,7 +67,45 @@ export function TonPriceTicker() {
         ? '—'
         : '…';
 
-  const dark = onLanding && overDark;
+  const dark = variant === 'inline' || (onLanding && overDark);
+
+  const pill = (
+    <a
+      href={TON_SOURCE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Price source: CoinGecko · open Toncoin"
+      className={
+        dark
+          ? `${pillBase} border-white/20 bg-[#0A0A0B]/90 text-white hover:border-[#3DA8FF]/45`
+          : `${pillBase} border-black/[0.08] bg-white/92 text-[#0A0A0B] hover:border-[#0098EA]/40 hover:bg-white`
+      }
+    >
+      <span className={dark ? 'text-[#3DA8FF]' : 'text-[#0098EA]'}>TON</span>
+      <span className={dark ? 'text-white/35' : 'text-black/25'}>/</span>
+      <span className={dark ? 'text-white/55' : 'text-black/45'}>USD</span>
+      <span className={dark ? 'text-white/95' : 'text-black/85'}>{formatted}</span>
+      <ExternalLink
+        className={`size-2.5 shrink-0 ${
+          dark
+            ? 'text-white/40 group-hover:text-[#3DA8FF]'
+            : 'text-black/30 group-hover:text-[#0098EA]'
+        }`}
+      />
+    </a>
+  );
+
+  if (variant === 'inline') {
+    return (
+      <div data-ton-ticker-probe className="shrink-0" aria-live="polite">
+        {pill}
+      </div>
+    );
+  }
+
+  if (onLanding && overDark) {
+    return null;
+  }
 
   return (
     <div
@@ -74,29 +114,7 @@ export function TonPriceTicker() {
       aria-live="polite"
       aria-label="TON to US dollar price"
     >
-      <a
-        href={TON_SOURCE_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Price source: CoinGecko · open Toncoin"
-        className={
-          dark
-            ? `${pillBase} border-white/20 bg-[#0A0A0B]/90 text-white hover:border-[#3DA8FF]/45`
-            : `${pillBase} border-black/[0.08] bg-white/92 text-[#0A0A0B] hover:border-[#0098EA]/40 hover:bg-white`
-        }
-      >
-        <span className={dark ? 'text-[#3DA8FF]' : 'text-[#0098EA]'}>TON</span>
-        <span className={dark ? 'text-white/35' : 'text-black/25'}>/</span>
-        <span className={dark ? 'text-white/55' : 'text-black/45'}>USD</span>
-        <span className={dark ? 'text-white/95' : 'text-black/85'}>{formatted}</span>
-        <ExternalLink
-          className={`size-2.5 shrink-0 ${
-            dark
-              ? 'text-white/40 group-hover:text-[#3DA8FF]'
-              : 'text-black/30 group-hover:text-[#0098EA]'
-          }`}
-        />
-      </a>
+      {pill}
     </div>
   );
 }
