@@ -4,18 +4,22 @@ TON jetton launchpad — deploy TEP-74 tokens via TON Connect, public launchpad,
 
 **Live:** [openfragment.live](https://www.openfragment.live) · **Docs:** [/docs](https://www.openfragment.live/docs)
 
-**Repository:** [github.com/rapkuryer-dot/openfragment](https://github.com/rapkuryer-dot/openfragment)
+**Open source:** [github.com/rapkuryer-dot/openfragment](https://github.com/rapkuryer-dot/openfragment)  
+**X (Twitter):** [@openfragment](https://x.com/openfragment)
+
+## Public repository
+
+This repo publishes the **frontend** and **smart contracts** only. Production backend routes (registry, proxies) are deployed privately and are not part of this tree — same approach as major trading UIs that keep server logic closed.
 
 ## What's included
 
-- `app/` — React + Vite frontend (landing, create, launchpad, manage, documentation)
-- `api/` — Vercel serverless routes (launchpad registry, Toncenter proxy, logo upload)
+- `app/` — React + Vite (landing, create, launchpad, manage, documentation)
 - `contracts/` — Tolk jetton minter & wallet (Acton), tests, deploy scripts
 - `wrappers-ts/` — TypeScript wrappers for the app
 
 Wallets: any **TON Connect 2** provider (Tonkeeper, MyTonWallet, Tonhub, OpenMask, **Telegram Wallet**, etc.).
 
-Support: [Telegram](https://t.me/+AwgvDTWzJUQ1MzUy) · rapkuryer@gmail.com
+Support: [Telegram](https://t.me/+AwgvDTWzJUQ1MzUy) · [rapkuryer@gmail.com](mailto:rapkuryer@gmail.com)
 
 ## Install
 
@@ -33,9 +37,9 @@ npm run typecheck
 npm run dev
 ```
 
-## Environment
+## Local development
 
-Copy `.env.example` to `.env` for local Toncenter API keys. On Vercel, link Redis/KV for the shared launchpad registry and set `TONCENTER_MAINNET_API_KEY`.
+Copy `.env.example` to `.env` for Toncenter keys when running contracts or local tooling.
 
 ## Contracts
 

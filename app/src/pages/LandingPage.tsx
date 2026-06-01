@@ -23,7 +23,11 @@ import {
   Fingerprint,
 } from 'lucide-react';
 import { TelegramIcon } from '@/components/TelegramIcon';
-import { TELEGRAM_COMMUNITY_URL, X_URL } from '@/lib/siteLinks';
+import {
+  GITHUB_REPO_URL,
+  TELEGRAM_COMMUNITY_URL,
+  X_URL,
+} from '@/lib/siteLinks';
 
 interface Props {
   onLaunch: () => void;
@@ -1063,6 +1067,15 @@ function Footer() {
           </a>
           <a href="#security" className="hover:text-white transition-colors">
             Security
+          </a>
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition-colors"
+            title="Source on GitHub"
+          >
+            GitHub
           </a>
           <a
             href={X_URL}

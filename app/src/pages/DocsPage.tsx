@@ -18,11 +18,13 @@ import {
   TRANSFER_FEE_PERCENT,
 } from '../lib/platformFees';
 import { GRADUATION_TON, GRADUATION_NEAR } from '../lib/launchpad';
+import { XIcon } from '@/components/XIcon';
 import {
   GITHUB_REPO_URL,
   SUPPORT_EMAIL,
   SUPPORT_EMAIL_MAILTO,
   TELEGRAM_COMMUNITY_URL,
+  X_URL,
 } from '../lib/siteLinks';
 
 const SECTIONS = [
@@ -90,6 +92,29 @@ export function DocsPage() {
           </Button>
           <Button asChild variant="outline" className="rounded-full h-11 px-6 font-bold">
             <a href="/launchpad">Browse launchpad</a>
+          </Button>
+          <Button asChild variant="outline" className="rounded-full h-11 px-6 font-bold">
+            <a
+              href={GITHUB_REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2"
+            >
+              GitHub
+              <ExternalLink className="size-3.5" />
+            </a>
+          </Button>
+          <Button asChild variant="outline" className="rounded-full h-11 px-6 font-bold">
+            <a
+              href={X_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2"
+              title="@openfragment on X"
+            >
+              <XIcon className="size-3.5" />
+              @openfragment
+            </a>
           </Button>
         </div>
       </header>
@@ -350,15 +375,28 @@ export function DocsPage() {
               stored in minter storage at deploy time.
             </p>
             <p className="mt-3 text-muted-foreground">
-              Full source (React app, API routes, docs page, Tolk contracts,
-              tests, CI):{' '}
+              Public source — frontend, documentation UI, and Tolk contracts:{' '}
               <a
                 href={GITHUB_REPO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-[#0098EA] font-semibold hover:underline"
               >
-                openfragment on GitHub
+                github.com/rapkuryer-dot/openfragment
+                <ExternalLink className="size-3.5" />
+              </a>
+              . Production backend is not published (same model as closed server
+              stacks on major trading products).
+            </p>
+            <p className="mt-3 text-muted-foreground">
+              Updates & announcements:{' '}
+              <a
+                href={X_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[#0098EA] font-semibold hover:underline"
+              >
+                @openfragment on X
                 <ExternalLink className="size-3.5" />
               </a>
             </p>
@@ -410,16 +448,25 @@ export function DocsPage() {
               q="Need help?"
               a={
                 <>
-                  Join our{' '}
+                  Follow{' '}
+                  <a
+                    href={X_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0098EA] font-semibold hover:underline"
+                  >
+                    @openfragment on X
+                  </a>
+                  , join{' '}
                   <a
                     href={TELEGRAM_COMMUNITY_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#0098EA] font-semibold hover:underline"
                   >
-                    Telegram community
-                  </a>{' '}
-                  or email{' '}
+                    Telegram
+                  </a>
+                  , or email{' '}
                   <a
                     href={SUPPORT_EMAIL_MAILTO}
                     className="text-[#0098EA] font-semibold hover:underline"
@@ -439,6 +486,18 @@ export function DocsPage() {
               screenshot of the wallet error if something failed on-chain.
             </p>
             <ul className="mt-4 space-y-3">
+              <li className="rounded-2xl border border-black/[0.06] bg-[#FAFAFB] px-4 py-3.5">
+                <p className="font-bold">X (Twitter)</p>
+                <a
+                  href={X_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 text-[#0098EA] font-semibold hover:underline"
+                >
+                  @openfragment
+                  <ExternalLink className="size-3.5" />
+                </a>
+              </li>
               <li className="rounded-2xl border border-black/[0.06] bg-[#FAFAFB] px-4 py-3.5">
                 <p className="font-bold">Telegram</p>
                 <a

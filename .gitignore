@@ -25,6 +25,9 @@ Session.vim
 .emacs/
 .helix/
 
+# Production serverless API (private — not published like GMGN backend)
+api/
+
 # Acton related
 .env
 *.mnemonic

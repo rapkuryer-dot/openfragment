@@ -16,7 +16,8 @@ import { DocsPage } from './pages/DocsPage';
 import { LandingPage } from './pages/LandingPage';
 import { OFLogo } from './pages/LandingPage';
 import { TelegramIcon } from '@/components/TelegramIcon';
-import { TELEGRAM_COMMUNITY_URL } from '@/lib/siteLinks';
+import { XIcon } from '@/components/XIcon';
+import { GITHUB_REPO_URL, TELEGRAM_COMMUNITY_URL, X_URL } from '@/lib/siteLinks';
 import { TonPriceTicker } from '@/components/TonPriceTicker';
 import { useRouter } from './lib/router';
 
@@ -107,6 +108,25 @@ export default function App() {
                   Mainnet
                 </Button>
               )}
+              <a
+                href={X_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex size-10 items-center justify-center rounded-full border border-black/[0.08] text-foreground hover:bg-[#F0F1F3] hover:border-black/[0.12] transition-colors max-sm:size-9"
+                title="@openfragment on X"
+                aria-label="OpenFragment on X"
+              >
+                <XIcon className="size-[15px]" />
+              </a>
+              <a
+                href={GITHUB_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:inline-flex h-10 items-center justify-center rounded-full border border-black/[0.08] px-3 text-[13px] font-bold text-muted-foreground hover:bg-[#F0F1F3] hover:text-foreground transition-colors"
+                title="Source on GitHub"
+              >
+                GitHub
+              </a>
               <a
                 href={TELEGRAM_COMMUNITY_URL}
                 target="_blank"
